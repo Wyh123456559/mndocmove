@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 27/27 tests; real README + bat HTML CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 27/27 tests |
-| Windows x86-64, JS / Node | strict check passed | 27/27 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 27/27 tests; native CLI real README + bat HTML E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 36/36 tests; real README + bat HTML CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 36/36 tests |
+| Windows x86-64, JS / Node | strict check passed | 36/36 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 36/36 tests; native CLI real README + bat HTML E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -27,10 +27,14 @@ duplicate `async/internal/c_buffer` import warning; E2E still executed and passe
 
 Windows native was attempted but cannot run here: MSVC C++ Build Tools / SDK
 are absent. MinGW fallback is rejected by async's platform guards; it is not
-claimed as supported. macOS and remote GitHub Actions have not been run locally.
+claimed as supported. macOS is not available locally.
 CI is configured for Windows (with MSVC), macOS and Linux, all four library
 targets, both CLI targets, formatting and interface drift. A configured workflow
-is not a CI pass. No push / remote CI success is claimed.
+is not a CI pass. The first actual remote run, for `a90c538`, passed on all
+three OS runners, including native runtime and both CLI E2E targets:
+[GitHub Actions run 38775375097](https://github.com/Wyh123456559/mndocmove/actions/runs/38775375097).
+That run tested 27 cases per target before contextual review was added; current
+changes must pass their own head-specific run after pushing.
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -47,6 +51,13 @@ Rewriting reparses the result and verifies every decoded destination. A
 regression test covers entity-encoded line breaks in a Markdown query suffix;
 they must remain encoded rather than becoming malformed source. Moves that
 would reinterpret opaque bytes as Markdown (or vice versa) are refused.
+
+Contextual review adds an independent hunk consumer that verifies old/new line
+counts and reconstructs exact replay output across dense/sparse changes,
+repeated lines, multiple context sizes and missing-final-newline states. Other
+cases cover CRLF/emoji, coalescing, rename/asset manifests, invalid contexts,
+terminal controls, deterministic wire reload and plan/source immutability.
+Both real CLI workflows also inspect saved plans through `review`.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

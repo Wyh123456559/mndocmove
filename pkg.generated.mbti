@@ -71,6 +71,7 @@ pub fn MovePlan::moves(Self) -> Array[Move]
 pub fn MovePlan::preview(Self) -> String
 pub fn MovePlan::profile(Self) -> Profile
 pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
+pub fn MovePlan::review(Self, context? : Int) -> String raise MoveError
 pub fn MovePlan::to_json_string(Self) -> String
 pub fn MovePlan::to_repr(Self) -> @debug.Repr
 

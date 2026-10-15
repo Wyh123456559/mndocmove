@@ -163,6 +163,23 @@ async fn export_tree(
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["review", plan_file] =>
+        println(@lib.MovePlan::from_json_string(read_text(plan_file)).review())
+      ["review", plan_file, context_text] => {
+        let mut context = -1
+        for i in 0..<=20 {
+          if context_text == i.to_string() {
+            context = i
+            break
+          }
+        }
+        if context < 0 {
+          stop("InvalidContext: use an integer from 0 to 20")
+        }
+        println(
+          @lib.MovePlan::from_json_string(read_text(plan_file)).review(context~),
+        )
+      }
       ["plan", root, moves, output, "--static-html"] => {
         let tree = read_tree(root)
         let plan = @lib.plan_moves(
@@ -194,7 +211,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

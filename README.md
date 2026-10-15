@@ -22,6 +22,7 @@ Run from this repository, choosing unused output names:
 ```text
 moon update
 moon run cmd/main --target wasm -- plan examples/vscode/tree examples/vscode/moves.json plan.json
+moon run cmd/main --target wasm -- review plan.json
 moon run cmd/main --target wasm -- replay examples/vscode/tree plan.json relocated-docs
 ```
 
@@ -59,6 +60,8 @@ This repository has not yet been published to Mooncakes.
   support for quoted `<a href>` / `<img src>` attributes in Markdown. The default
   `CommonMark` profile retains its conservative HTML refusal.
 - `MovePlan::edits/moves/preview`: independent review data.
+- `MovePlan::review(context=3)`: complete file-move manifest plus contextual
+  before/after Markdown hunks. CLI: `review PLAN_JSON [CONTEXT_LINES]`.
 - `MovePlan::replay(current_tree)`: refuses stale content, additions or deletions.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
   plan round trip; loading recomputes edits instead of trusting stored offsets.
@@ -98,6 +101,20 @@ and non-URL source remain intact. This is a strict static subset: unsupported
 tags / attributes, `srcset`, inline styles, scripts, `<base>`, templates,
 unquoted attribute values, duplicate attributes and ambiguous entities fail
 explicitly. See [exact HTML boundary](docs/html-profile.md).
+
+## Review before replay
+
+The `review` command works from the saved plan without reading or writing the
+source directory. It lists every individual moved file, including opaque assets,
+and shows changed Markdown with 0–20 context lines (default 3). Same-line edits
+and nearby hunks are coalesced; repeated text cannot move an edit to another
+occurrence. Quoted paths, CRLF and missing-final-newline markers keep the
+evidence explicit. Terminal control characters / bare CR refuse text review;
+the escaped JSON preview and replay remain available.
+
+The report is **for review**, not a runnable patch: its asset manifest is not
+binary patch data. Use `replay` to perform the complete migration and enforce
+the snapshot guard. See [report format and checks](docs/review.md).
 
 Limits: 4096 files, 64 MiB total bytes, 1 MiB per Markdown, 4096 units per
 relative path, no duplicate/ASCII-case-alias paths, file/directory conflicts,

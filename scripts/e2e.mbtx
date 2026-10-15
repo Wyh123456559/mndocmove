@@ -6,13 +6,18 @@ import {
   "moonbitlang/core/encoding/utf8",
 }
 
-async fn invoke(args : Array[String], expected : Int) -> Unit {
+async fn capture(args : Array[String], expected : Int) -> String {
   let (code, out, err) = @process.collect_output("moon", args)
   if code != expected {
     println(out.text())
     println(err.text())
     abort("unexpected process exit: " + code.to_string())
   }
+  out.text()
+}
+
+async fn invoke(args : Array[String], expected : Int) -> Unit {
+  ignore(capture(args, expected))
 }
 
 async fn main {
@@ -25,6 +30,12 @@ async fn main {
   let original = @fs.read_file("examples/vscode/tree/README.md").text()
   let original_asset = @fs.read_file("examples/vscode/tree/example.mjs").binary()
   invoke(prefix + ["plan", "examples/vscode/tree", "examples/vscode/moves.json", plan], 0)
+  let review = capture(prefix + ["review", plan, "1"], 0)
+  assert_true(review.contains("--- \"README.md\"\n+++ \"manual/README.md\""))
+  assert_true(review.contains("[example.mjs](../samples/example.mjs)"))
+  assert_true(review.contains("[opaque asset]"))
+  invoke(prefix + ["review", plan, "21"], 1)
+  invoke(prefix + ["review", plan, "invalid"], 1)
   invoke(prefix + ["replay", "examples/vscode/tree", plan, output], 0)
   let expected = original.replace(old="[example.mjs](./example.mjs)", new="[example.mjs](../samples/example.mjs)")
   assert_true(expected != original)
@@ -55,6 +66,8 @@ async fn main {
   invoke(prefix + ["plan", "examples/bat/tree", "examples/bat/moves.json", tmp + "/refused-html.json"], 1)
   assert_true(!@fs.exists(tmp + "/refused-html.json"))
   invoke(prefix + ["plan", "examples/bat/tree", "examples/bat/moves.json", html_plan, "--static-html"], 0)
+  let html_review = capture(prefix + ["review", html_plan], 0)
+  assert_true(html_review.contains("src=\"../art/logo-header.svg\""))
   invoke(prefix + ["replay", "examples/bat/tree", html_plan, html_output], 0)
   assert_eq(@fs.read_file(html_output + "/manual/header.md").text(), html_source.replace(old="src=\"doc/logo-header.svg\"", new="src=\"../art/logo-header.svg\""))
   assert_eq(@fs.read_file(html_output + "/art/logo-header.svg").binary(), logo)

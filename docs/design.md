@@ -36,7 +36,11 @@ replay and refusals for unsupported HTML URL grammars. The original profile
 remains the conservative default. File moves cannot silently change whether
 the content is interpreted as Markdown.
 
+Implemented third capability: contextual migration review derived from verified
+source edits, including all opaque-asset moves and an offline saved-plan CLI.
+
+Next capability: stage and verify exports before publishing a final directory.
 Later work, not implemented: carefully specified site-route profiles, editor
-integration and filesystem transactions. Each requires its own end-to-end
+integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
 or network availability check is part of the library.

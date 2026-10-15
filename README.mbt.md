@@ -43,3 +43,21 @@ test "static HTML image relocation" {
   )
 }
 ```
+
+Review a saved migration before exporting:
+
+```mbt check
+///|
+test "review includes source evidence and opaque resource moves" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](a.txt)\n"),
+    @mndocmove.Entry::new("a.txt", b"A"),
+  ])
+  let plan = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("a.txt", "b.txt"),
+  ])
+  let review = plan.review(context=0)
+  assert_true(review.contains("-[asset](a.txt)\n+[asset](b.txt)\n"))
+  assert_true(review.contains("[opaque asset]"))
+}
+```
