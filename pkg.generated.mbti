@@ -1,0 +1,78 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "Wyh123456559/mndocmove"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn moves_from_json(String) -> Array[Move] raise MoveError
+
+pub fn plan_moves(DocTree, Array[Move]) -> MovePlan raise MoveError
+
+// Errors
+pub(all) suberror MoveError {
+  Refused(Diagnostic)
+} derive(@debug.Debug)
+pub fn MoveError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) struct Diagnostic {
+  code : String
+  path : String
+  offset : Int
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn Diagnostic::equal(Self, Self) -> Bool
+pub fn Diagnostic::not_equal(Self, Self) -> Bool
+pub fn Diagnostic::to_repr(Self) -> @debug.Repr
+
+type DocTree derive(@debug.Debug)
+pub fn DocTree::entries(Self) -> Array[Entry]
+pub fn DocTree::get(Self, String) -> Entry?
+pub fn DocTree::new(Array[Entry]) -> Self raise MoveError
+pub fn DocTree::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Edit {
+  path : String
+  start : Int
+  end : Int
+  before : String
+  after : String
+  old_target : String
+  new_target : String
+} derive(Eq, @debug.Debug)
+pub fn Edit::equal(Self, Self) -> Bool
+pub fn Edit::not_equal(Self, Self) -> Bool
+pub fn Edit::to_repr(Self) -> @debug.Repr
+
+type Entry derive(Eq, @debug.Debug)
+pub fn Entry::data(Self) -> Bytes
+pub fn Entry::equal(Self, Self) -> Bool
+pub fn Entry::markdown(String, String) -> Self
+pub fn Entry::new(String, Bytes) -> Self
+pub fn Entry::not_equal(Self, Self) -> Bool
+pub fn Entry::path(Self) -> String
+pub fn Entry::text(Self) -> String raise MoveError
+pub fn Entry::to_repr(Self) -> @debug.Repr
+
+type Move derive(Eq, @debug.Debug)
+pub fn Move::destination(Self) -> String
+pub fn Move::equal(Self, Self) -> Bool
+pub fn Move::new(String, String) -> Self
+pub fn Move::not_equal(Self, Self) -> Bool
+pub fn Move::source(Self) -> String
+pub fn Move::to_repr(Self) -> @debug.Repr
+
+type MovePlan derive(@debug.Debug)
+pub fn MovePlan::edits(Self) -> Array[Edit]
+pub fn MovePlan::from_json_string(String) -> Self raise MoveError
+pub fn MovePlan::moves(Self) -> Array[Move]
+pub fn MovePlan::preview(Self) -> String
+pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
+pub fn MovePlan::to_json_string(Self) -> String
+pub fn MovePlan::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

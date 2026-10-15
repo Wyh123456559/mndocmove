@@ -1,0 +1,9 @@
+import {
+  "Wyh123456559/mndocmove/cli",
+  "moonbitlang/async",
+  "moonbitlang/core/env",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "+wasm+native"

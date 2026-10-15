@@ -1,0 +1,52 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/encoding/utf8",
+}
+
+async fn invoke(args : Array[String], expected : Int) -> Unit {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("unexpected process exit: " + code.to_string())
+  }
+}
+
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  if target != "wasm" && target != "native" { abort("Use: moon run scripts/e2e.mbtx -- wasm|native") }
+  let tmp = @fs.tmpdir(prefix="mndocmove-e2e-")
+  let plan = tmp + "/plan.json"
+  let output = tmp + "/export"
+  let prefix = ["run", "cmd/main", "--target", target, "--target-dir", tmp + "/build", "--deny-warn", "--"]
+  let original = @fs.read_file("examples/vscode/tree/README.md").text()
+  let original_asset = @fs.read_file("examples/vscode/tree/example.mjs").binary()
+  invoke(prefix + ["plan", "examples/vscode/tree", "examples/vscode/moves.json", plan], 0)
+  invoke(prefix + ["replay", "examples/vscode/tree", plan, output], 0)
+  let expected = original.replace(old="[example.mjs](./example.mjs)", new="[example.mjs](../samples/example.mjs)")
+  assert_true(expected != original)
+  assert_eq(@fs.read_file(output + "/manual/README.md").text(), expected)
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), original_asset)
+  // Exclusive output creation: replay cannot overwrite a completed export.
+  invoke(prefix + ["replay", "examples/vscode/tree", plan, output], 1)
+  let source = tmp + "/changed"
+  @fs.mkdir(source)
+  @fs.write_file(source + "/README.md", @utf8.encode(original + "changed"))
+  @fs.write_file(source + "/example.mjs", @fs.read_file("examples/vscode/tree/example.mjs"))
+  invoke(prefix + ["replay", source, plan, tmp + "/stale"], 1)
+  assert_true(!@fs.exists(tmp + "/stale"))
+  invoke(prefix + ["replay", "examples/vscode/tree", plan, "examples/vscode/tree/should-not-exist"], 1)
+  assert_true(!@fs.exists("examples/vscode/tree/should-not-exist"))
+  invoke(prefix + ["plan", "examples/vscode/tree", "examples/vscode/moves.json", "examples/vscode/tree/should-not-exist.json"], 1)
+  assert_true(!@fs.exists("examples/vscode/tree/should-not-exist.json"))
+  @fs.mkdir(source + "/empty")
+  invoke(prefix + ["plan", source, "examples/vscode/moves.json", tmp + "/empty-plan.json"], 1)
+  assert_true(!@fs.exists(tmp + "/empty-plan.json"))
+  assert_eq(@fs.read_file("examples/vscode/tree/README.md").text(), original)
+  assert_eq(@fs.read_file("examples/vscode/tree/example.mjs").binary(), original_asset)
+  invoke(prefix + ["plan"], 2)
+  println("E2E passed: " + target + " (real README relocation, bytes, stale plan, exclusive output, usage). Files retained: " + tmp)
+}

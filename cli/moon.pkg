@@ -1,0 +1,7 @@
+import {
+  "Wyh123456559/mndocmove" @lib,
+  "moonbitlang/async/fs",
+  "moonbitlang/core/debug",
+}
+
+supported_targets = "+wasm+native"

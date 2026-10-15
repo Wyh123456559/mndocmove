@@ -1,0 +1,44 @@
+# Executed validation — 2026-10-16
+
+Stable Windows ZIP was fetched from the official `binaries/latest` endpoint,
+Last-Modified 2026-10-12, SHA-256
+`6E3EF6CB96AA5086D122183972687F79FC912F80652000907D96EE6AD967E3BF`.
+It matched the already extracted stable toolchain used for these commands:
+moon 0.1.20261012 (`748b63c`), moonc v0.10.15 (`943464bfa`), matching moonrun.
+Configuration uses current `moon.mod` / `moon.pkg` syntax.
+
+Executed locally, rather than inferred from compilation:
+
+| Environment | Check | Tests / runtime |
+|---|---|---|
+| Windows x86-64, Wasm host | strict check passed | 17/17 tests; real README CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 17/17 tests |
+| Windows x86-64, JS / Node | strict check passed | 17/17 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 17/17 tests; native CLI real README E2E passed |
+
+`moon fmt --check`, `moon info` executed; generated interfaces are checked in.
+`--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
+No MoonBit project warnings remain. The upstream async native C build on Linux
+emits warnings for `posix_spawn_file_actions_addchdir_np` declaration and an
+ignored `write` return value. MoonBit's deny-warn does not make those C compiler
+warnings fatal. They were not suppressed or patched in downloaded dependencies.
+Standalone `.mbtx` compilation can additionally emit the toolchain/dependency
+duplicate `async/internal/c_buffer` import warning; E2E still executed and passed.
+
+Windows native was attempted but cannot run here: MSVC C++ Build Tools / SDK
+are absent. MinGW fallback is rejected by async's platform guards; it is not
+claimed as supported. macOS and remote GitHub Actions have not been run locally.
+CI is configured for Windows (with MSVC), macOS and Linux, all four library
+targets, both CLI targets, formatting and interface drift. A configured workflow
+is not a CI pass. No push / remote CI success is claimed.
+
+Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
+URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
+missing targets, path conflicts, root escape, malformed/unknown wire data,
+exact file/Markdown size limits, empty destinations, directory links,
+stale snapshots and successful reuse after a refusal. The E2E script also
+checks exit codes, no source writes, refusal of output inside the source root,
+existing-output protection and unsupported empty-directory inventory.
+
+Reproduce with the commands in README. Temporary E2E data is retained in the
+printed system temporary directory; it is not checked into this repository.

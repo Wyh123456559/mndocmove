@@ -1,0 +1,36 @@
+name: MoonBit
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hustcer/setup-moonbit@v1
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - run: moon version --all
+      - run: moon update
+      - run: moon fmt --check
+      - run: moon info
+      - run: git diff --exit-code -- '*.mbti'
+      - run: moon check --target wasm --deny-warn
+      - run: moon check --target wasm-gc --deny-warn
+      - run: moon check --target js --deny-warn
+      - run: moon check --target native --deny-warn
+      - run: moon test --target wasm --deny-warn
+      - run: moon test --target wasm-gc --deny-warn
+      - run: moon test --target js --deny-warn
+      - run: moon test --target native --deny-warn
+      - run: moon run scripts/e2e.mbtx -- wasm
+      - run: moon run scripts/e2e.mbtx -- native
