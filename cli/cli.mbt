@@ -163,6 +163,20 @@ async fn export_tree(
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["plan", root, moves, output, "--static-html"] => {
+        let tree = read_tree(root)
+        let plan = @lib.plan_moves(
+          tree,
+          @lib.moves_from_json(read_text(moves)),
+          profile=StaticHtml,
+        )
+        @fs.write_file(
+          outside_path(root, output),
+          plan.to_json_string(),
+          create_mode=CreateNew,
+        )
+        println(plan.preview())
+      }
       ["plan", root, moves, output] => {
         let tree = read_tree(root)
         let plan = @lib.plan_moves(tree, @lib.moves_from_json(read_text(moves)))
@@ -180,7 +194,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

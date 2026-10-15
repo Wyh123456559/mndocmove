@@ -8,7 +8,7 @@ import {
 // Values
 pub fn moves_from_json(String) -> Array[Move] raise MoveError
 
-pub fn plan_moves(DocTree, Array[Move]) -> MovePlan raise MoveError
+pub fn plan_moves(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
 
 // Errors
 pub(all) suberror MoveError {
@@ -69,9 +69,16 @@ pub fn MovePlan::edits(Self) -> Array[Edit]
 pub fn MovePlan::from_json_string(String) -> Self raise MoveError
 pub fn MovePlan::moves(Self) -> Array[Move]
 pub fn MovePlan::preview(Self) -> String
+pub fn MovePlan::profile(Self) -> Profile
 pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::to_json_string(Self) -> String
 pub fn MovePlan::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Profile {
+  CommonMark
+  StaticHtml
+} derive(@debug.Debug)
+pub fn Profile::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

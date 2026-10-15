@@ -120,7 +120,12 @@ pub fn MovePlan::to_json_string(self : MovePlan) -> String {
   let value : Json = [
     "mndocmove",
     1,
-    "commonmark",
+    Json(
+      match self.profile {
+        CommonMark => "commonmark"
+        StaticHtml => "static-html"
+      },
+    ),
     Json::array(files),
     Json::array(moves),
   ]
@@ -135,10 +140,18 @@ pub fn MovePlan::from_json_string(text : String) -> MovePlan raise MoveError {
     [
       String("mndocmove"),
       Number(1, ..),
-      String("commonmark"),
+      String(profile_name),
       Array(files),
       moves,
     ] => {
+      let profile = match profile_name {
+        "commonmark" => CommonMark
+        "static-html" => StaticHtml
+        _ => {
+          refuse("InvalidPlan", "", "Unknown syntax profile")
+          abort("unreachable")
+        }
+      }
       if files.length() > 4096 {
         refuse("FileLimit", "", "Use at most 4096 files")
       }
@@ -153,7 +166,7 @@ pub fn MovePlan::from_json_string(text : String) -> MovePlan raise MoveError {
             )
         }
       }
-      plan_moves(DocTree::new(entries), decode_moves(moves))
+      plan_moves(DocTree::new(entries), decode_moves(moves), profile~)
     }
     _ => {
       refuse(

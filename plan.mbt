@@ -1,10 +1,11 @@
 ///|
 /// Plans simultaneous moves against the original inventory. Text is locally
-/// patched, never rendered/serialized as Markdown. Raw HTML and extensions
-/// are refused in this profile. Empty moves preserve all bytes without parsing.
+/// patched, never rendered/serialized as Markdown. CommonMark is the default;
+/// static HTML requires opt-in. Empty moves preserve bytes without parsing.
 pub fn plan_moves(
   tree : DocTree,
   requested : Array[Move],
+  profile~ : Profile = CommonMark,
 ) -> MovePlan raise MoveError {
   let moves = requested.copy()
   if moves.length() > 4096 {
@@ -37,9 +38,19 @@ pub fn plan_moves(
     Entry::new(moved(file.path, moves), file.data)
   })
   ignore(DocTree::new(projected))
+  for i = 0; i < tree.files.length(); i = i + 1 {
+    if is_markdown(tree.files[i].path) != is_markdown(projected[i].path) {
+      refuse(
+        "FileKindChange",
+        tree.files[i].path,
+        "Keep Markdown files as .md and opaque assets as non-Markdown; content conversion needs a separate workflow",
+      )
+    }
+  }
   if moves.is_empty() {
     return {
       original: tree,
+      profile,
       moves,
       edits: [],
       result: { files: tree.files.copy(), },
@@ -49,14 +60,14 @@ pub fn plan_moves(
   let edits : Array[Edit] = []
   for file in tree.files {
     if is_markdown(file.path) {
-      let (next, changes) = rewrite(file, tree, moves)
+      let (next, changes) = rewrite(file, tree, moves, profile)
       output.push(next)
       edits.append(changes)
     } else {
       output.push(Entry::new(moved(file.path, moves), file.data))
     }
   }
-  { original: tree, moves, edits, result: DocTree::new(output), }
+  { original: tree, profile, moves, edits, result: DocTree::new(output), }
 }
 
 ///|

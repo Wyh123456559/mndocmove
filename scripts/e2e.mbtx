@@ -48,5 +48,17 @@ async fn main {
   assert_eq(@fs.read_file("examples/vscode/tree/README.md").text(), original)
   assert_eq(@fs.read_file("examples/vscode/tree/example.mjs").binary(), original_asset)
   invoke(prefix + ["plan"], 2)
+  let html_plan = tmp + "/html-plan.json"
+  let html_output = tmp + "/html-export"
+  let html_source = @fs.read_file("examples/bat/tree/header.md").text()
+  let logo = @fs.read_file("examples/bat/tree/doc/logo-header.svg").binary()
+  invoke(prefix + ["plan", "examples/bat/tree", "examples/bat/moves.json", tmp + "/refused-html.json"], 1)
+  assert_true(!@fs.exists(tmp + "/refused-html.json"))
+  invoke(prefix + ["plan", "examples/bat/tree", "examples/bat/moves.json", html_plan, "--static-html"], 0)
+  invoke(prefix + ["replay", "examples/bat/tree", html_plan, html_output], 0)
+  assert_eq(@fs.read_file(html_output + "/manual/header.md").text(), html_source.replace(old="src=\"doc/logo-header.svg\"", new="src=\"../art/logo-header.svg\""))
+  assert_eq(@fs.read_file(html_output + "/art/logo-header.svg").binary(), logo)
+  assert_eq(@fs.read_file("examples/bat/tree/header.md").text(), html_source)
+  println("Static HTML E2E passed: bat header, profile opt-in, saved-plan replay, exact source edit and logo bytes.")
   println("E2E passed: " + target + " (real README relocation, bytes, stale plan, exclusive output, usage). Files retained: " + tmp)
 }

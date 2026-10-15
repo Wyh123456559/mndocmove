@@ -3,12 +3,14 @@ priv struct Destination {
   first : Int32
   last : Int32
   url : String
+  html : Bool
 }
 
 ///|
 fn destinations(
   source : String,
   path : String,
+  profile : Profile,
 ) -> Array[Destination] raise MoveError {
   let doc = @cmark.Doc::from_string(
     source,
@@ -19,10 +21,16 @@ fn destinations(
   )
   let found : Array[Destination] = []
   let problems : Array[Diagnostic] = []
+  let html_ranges : Array[(Int32, Int32)] = []
   let add = fn(def : @cmark.LinkDefinition) {
     if def.dest is Some(dest) {
       let loc = dest.meta.loc
-      found.push({ first: loc.first_ccode, last: loc.last_ccode, url: dest.v, })
+      found.push({
+        first: loc.first_ccode,
+        last: loc.last_ccode,
+        url: dest.v,
+        html: false,
+      })
     }
   }
   let unsupported = fn(meta : @base.Meta, kind : String) {
@@ -42,7 +50,14 @@ fn destinations(
             Inline(def) => add(def.v)
             Ref(_, _, _) => ()
           }
-        RawHtml(node) => unsupported(node.meta, "Raw HTML")
+        RawHtml(node) =>
+          match profile {
+            CommonMark => unsupported(node.meta, "Raw HTML")
+            StaticHtml =>
+              html_ranges.push(
+                (node.meta.loc.first_ccode, node.meta.loc.last_ccode),
+              )
+          }
         Text(node) =>
           if node.v.contains("[[") || node.v.contains("{{") {
             unsupported(node.meta, "Wiki links or templates")
@@ -54,7 +69,14 @@ fn destinations(
     block=@cmark.FolderFn(fn(_, _, node) {
       match node {
         LinkRefDefinition(def) => add(def.v)
-        HtmlBlock(node) => unsupported(node.meta, "HTML blocks")
+        HtmlBlock(node) =>
+          match profile {
+            CommonMark => unsupported(node.meta, "HTML blocks")
+            StaticHtml =>
+              html_ranges.push(
+                (node.meta.loc.first_ccode, node.meta.loc.last_ccode),
+              )
+          }
         _ => ()
       }
       @cmark.FolderResult::Default
@@ -68,6 +90,9 @@ fn destinations(
   }
   if problems.length() > 0 {
     raise Refused(problems[0])
+  }
+  for (first, last) in html_ranges {
+    found.append(html_destinations(source, path, first, last))
   }
   found.sort_by(fn(a, b) { a.first.compare(b.first) })
   let unique : Array[Destination] = []
@@ -88,11 +113,15 @@ fn rewrite(
   file : Entry,
   tree : DocTree,
   moves : Array[Move],
+  profile : Profile,
 ) -> (Entry, Array[Edit]) raise MoveError {
   let source = file.text()
   let edits : Array[Edit] = []
   let next_path = moved(file.path, moves)
-  for dest in destinations(source, file.path) {
+  let refs = destinations(source, file.path, profile)
+  let expected = refs.map(fn(d) { d.url })
+  for index = 0; index < refs.length(); index = index + 1 {
+    let dest = refs[index]
     if dest.url.is_empty() {
       continue
     }
@@ -104,12 +133,16 @@ fn rewrite(
       )
     }
     let raw = source[dest.first:dest.last + 1].to_owned()
-    let clean = @mdchar.utf_16_clean_unesc_unref(
-      StringBuilder(),
-      raw,
-      first=0,
-      last=raw.length() - 1,
-    )
+    let clean = if dest.html {
+      html_decode(raw, file.path, dest.first)
+    } else {
+      @mdchar.utf_16_clean_unesc_unref(
+        StringBuilder(),
+        raw,
+        first=0,
+        last=raw.length() - 1,
+      )
+    }
     if clean != dest.url {
       refuse(
         "SourcePosition",
@@ -161,9 +194,15 @@ fn rewrite(
       continue
     }
     let trailing = if url_path.has_suffix("/") { "/" } else { "" }
-    let after = markdown_url(
-      encode_url_path(relative_path(next_path, new_target)) + trailing + suffix,
-    )
+    let cooked = encode_url_path(relative_path(next_path, new_target)) +
+      trailing +
+      suffix
+    expected[index] = cooked
+    let after = if dest.html {
+      html_encode(cooked)
+    } else {
+      markdown_url(cooked)
+    }
     edits.push({
       path: file.path,
       start: dest.first,
@@ -189,5 +228,14 @@ fn rewrite(
     offset = edit.end
   }
   output.write_view(source[offset:])
-  (Entry::markdown(next_path, output.to_string()), edits)
+  let text = output.to_string()
+  let actual = destinations(text, next_path, profile).map(fn(d) { d.url })
+  if actual != expected {
+    refuse(
+      "RewriteInvariant",
+      file.path,
+      "Reparsed destinations differ from the intended URLs; no partial plan was produced",
+    )
+  }
+  (Entry::markdown(next_path, text), edits)
 }

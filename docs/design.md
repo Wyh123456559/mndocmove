@@ -21,16 +21,20 @@ children all disappear fail rather than yielding dangling references.
 The cmark dependency supplies CommonMark syntax and UTF-16 source positions.
 Each destination span is checked against the parser's cooked value before
 editing. Edits are ordered, checked for overlap and applied to the original
-text. Immutable bytes and private array representation prevent callers from
+text. The complete result is then reparsed: the number/order and decoded values
+of every destination must match the intended URL list, or planning fails with
+`RewriteInvariant`. Immutable bytes and private array representation prevent callers from
 mutating a snapshot through a getter. Wire decoding recomputes all derived
 data; no edit is applied from a serialized untrusted offset.
 
 Implemented first capability: CommonMark relocation, deterministic full-plan
 exchange, stale-snapshot guard, new-directory CLI export and public fixture.
 
-Next capability: explicit static-HTML profile for common README `href`/`src`
-attributes, with source/quote preservation and strict refusals for unsupported
-HTML URL grammars. Keep the original profile as the conservative default.
+Implemented second capability: explicit static-HTML profile for common README
+`a[href]`/`img[src]` attributes, with source/quote preservation, full saved-plan
+replay and refusals for unsupported HTML URL grammars. The original profile
+remains the conservative default. File moves cannot silently change whether
+the content is interpreted as Markdown.
 
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and filesystem transactions. Each requires its own end-to-end

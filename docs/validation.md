@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 17/17 tests; real README CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 17/17 tests |
-| Windows x86-64, JS / Node | strict check passed | 17/17 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 17/17 tests; native CLI real README E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 27/27 tests; real README + bat HTML CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 27/27 tests |
+| Windows x86-64, JS / Node | strict check passed | 27/27 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 27/27 tests; native CLI real README + bat HTML E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -39,6 +39,14 @@ exact file/Markdown size limits, empty destinations, directory links,
 stale snapshots and successful reuse after a refusal. The E2E script also
 checks exit codes, no source writes, refusal of output inside the source root,
 existing-output protection and unsupported empty-directory inventory.
+
+The second capability adds inline/block HTML quote/entity round trips, mixed
+HTML/Markdown moves, strict unsupported-attribute/tag failures, comments/code
+preservation, old CommonMark wire compatibility and explicit profile replay.
+Rewriting reparses the result and verifies every decoded destination. A
+regression test covers entity-encoded line breaks in a Markdown query suffix;
+they must remain encoded rather than becoming malformed source. Moves that
+would reinterpret opaque bytes as Markdown (or vice versa) are refused.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

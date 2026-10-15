@@ -14,7 +14,7 @@ directory. It never modifies the source directory.
 
 Requires MoonBit stable (validated with moon 0.1.20261012 / moonc v0.10.15),
 and Node.js for JS tests. `moon update` downloads declared Mooncakes packages.
-The fixture is an unmodified Microsoft README plus its linked example, with
+The first fixture is an unmodified Microsoft README plus its linked example, with
 [MIT license and pinned provenance](examples/vscode/SOURCE.md).
 
 Run from this repository, choosing unused output names:
@@ -55,6 +55,9 @@ This repository has not yet been published to Mooncakes.
 - `DocTree::new(Array[Entry])`: bounded, validated immutable snapshot.
 - `Move::new(old, new)` and `plan_moves(tree, moves)`: simultaneous file or
   directory-prefix moves, minimal source edits, complete projected inventory.
+- `Profile::StaticHtml` via `plan_moves(tree,moves,profile=StaticHtml)`: explicit
+  support for quoted `<a href>` / `<img src>` attributes in Markdown. The default
+  `CommonMark` profile retains its conservative HTML refusal.
 - `MovePlan::edits/moves/preview`: independent review data.
 - `MovePlan::replay(current_tree)`: refuses stale content, additions or deletions.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
@@ -71,13 +74,30 @@ spans / fences, link titles, non-URL text, line endings, BOMs and all opaque
 asset bytes are preserved. Unused reference definitions are also updated.
 Links to missing targets are refused; include all local targets in your root.
 
-Raw HTML, wiki links and template markers are currently refused when planning
-a nonempty move list. MDX, site routing, extensionless-to-Markdown inference,
+Raw HTML requires the static HTML profile; wiki links and template markers
+are refused when planning a nonempty move list. MDX, site routing, extensionless-to-Markdown inference,
 heading renames, root-relative URLs, encoded separators/NUL, paths escaping
 the root, symlinks, special files and unknown wire semantics are unsupported.
+Links naming the inventory root directory itself are currently refused.
 Non-Markdown files are opaque assets: references inside JavaScript, HTML,
 CSS or configuration are outside this API's scope. The tool cannot prove
 that arbitrary text has no application-specific path references.
+Moves cannot change the `.md` / opaque-asset classification.
+
+## Static HTML workflow
+
+```text
+moon run cmd/main --target wasm -- plan examples/bat/tree examples/bat/moves.json html-plan.json --static-html
+moon run cmd/main --target wasm -- replay examples/bat/tree html-plan.json relocated-html
+```
+
+This moves a [real bat README header and logo](examples/bat/SOURCE.md), changing
+only its local `src` to `../art/logo-header.svg`. The saved plan records the
+profile, so replay needs no extra flag. Attribute case, quote style, comments
+and non-URL source remain intact. This is a strict static subset: unsupported
+tags / attributes, `srcset`, inline styles, scripts, `<base>`, templates,
+unquoted attribute values, duplicate attributes and ambiguous entities fail
+explicitly. See [exact HTML boundary](docs/html-profile.md).
 
 Limits: 4096 files, 64 MiB total bytes, 1 MiB per Markdown, 4096 units per
 relative path, no duplicate/ASCII-case-alias paths, file/directory conflicts,

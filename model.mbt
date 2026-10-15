@@ -164,6 +164,7 @@ pub(all) struct Edit {
 ///|
 struct MovePlan {
   original : DocTree
+  profile : Profile
   moves : Array[Move]
   edits : Array[Edit]
   result : DocTree
@@ -172,6 +173,21 @@ struct MovePlan {
 ///|
 pub fn MovePlan::edits(self : MovePlan) -> Array[Edit] {
   self.edits.copy()
+}
+
+///|
+/// Explicit syntax policy. StaticHtml adds a conservative HTML subset.
+pub(all) enum Profile {
+  CommonMark
+  StaticHtml
+} derive(@debug.Debug)
+
+///|
+pub extend Profile with @debug.Debug::{to_repr}
+
+///|
+pub fn MovePlan::profile(self : MovePlan) -> Profile {
+  self.profile
 }
 
 ///|

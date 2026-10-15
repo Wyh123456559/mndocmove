@@ -233,7 +233,12 @@ fn markdown_url(url : String) -> String {
       ')' => output.write_string("\\)")
       ' ' => output.write_string("&#32;")
       '\t' => output.write_string("&#9;")
-      _ => output.write_char(c)
+      _ =>
+        if c.to_int() < 32 {
+          output.write_string("&#" + c.to_int().to_string() + ";")
+        } else {
+          output.write_char(c)
+        }
     }
   }
   output.to_string()
