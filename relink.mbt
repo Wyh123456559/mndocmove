@@ -94,6 +94,7 @@ pub fn plan_relinks(
     profile,
     moves: [],
     relinks: forward.moves,
+    adopted_from: None,
     edits,
     result: forward.result,
   }

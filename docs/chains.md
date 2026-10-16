@@ -3,6 +3,8 @@
 A [link-only repair](relink.md) may be the first plan. Its historical renames
 remain in that first plan's evidence/wire; later stages use the repaired current
 namespace. Replay/export and restore still guard the two complete endpoints.
+This includes [verified adoption](adopt.md), whose compact first-stage wire
+retains the original baseline and derives its physical pre-repair input.
 
 A documentation reorganization often happens in stages: move guides first,
 then reorganize images/examples using their new paths. `MovePlan::then_moves`

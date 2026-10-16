@@ -247,6 +247,37 @@ test "repair links at already-moved paths" {
 }
 ```
 
+Verify physical renames against a previously reviewed baseline before repairing:
+
+```mbt check
+///|
+test "adopt the exact physically renamed snapshot" {
+  let baseline = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](a.bin)"),
+    @mndocmove.Entry::new("a.bin", b"A"),
+  ])
+  let pending = @mndocmove.plan_moves(baseline, [
+    @mndocmove.Move::new("r.md", "manual/r.md"),
+  ])
+  let physical = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("manual/r.md", "[asset](a.bin)"),
+    @mndocmove.Entry::new("a.bin", b"A"),
+  ])
+  assert_true(pending.check_renamed(physical).is_match())
+  let adopted = pending.adopt(physical)
+  assert_eq(adopted.moves(), [])
+  let loaded = @mndocmove.MovePlan::from_json_string(adopted.to_json_string())
+  assert_eq(
+    loaded.replay(physical).entries(),
+    pending.replay(baseline).entries(),
+  )
+  assert_eq(
+    loaded.restore(loaded.replay(physical)).entries(),
+    physical.entries(),
+  )
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

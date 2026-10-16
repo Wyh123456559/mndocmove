@@ -80,7 +80,9 @@ pub fn MoveChain::to_json_string(Self) -> String raise MoveError
 pub fn MoveChain::to_repr(Self) -> @debug.Repr
 
 type MovePlan derive(@debug.Debug)
+pub fn MovePlan::adopt(Self, DocTree) -> Self raise MoveError
 pub fn MovePlan::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport
+pub fn MovePlan::check_renamed(Self, DocTree) -> SnapshotReport raise MoveError
 pub fn MovePlan::edits(Self) -> Array[Edit]
 pub fn MovePlan::from_json_string(String) -> Self raise MoveError
 pub fn MovePlan::merge(Self, Self) -> Self raise MoveError

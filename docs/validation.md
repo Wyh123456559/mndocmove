@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 124/124 tests; all six E2E scripts passed, including already-moved repair |
-| Windows x86-64, Wasm-GC | strict check passed | 117/117 tests |
-| Windows x86-64, JS / Node | strict check passed | 117/117 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 124/124 tests; real Git-to-repair CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 134/134 tests; all six E2E scripts passed, including verified adoption |
+| Windows x86-64, Wasm-GC | strict check passed | 127/127 tests |
+| Windows x86-64, JS / Node | strict check passed | 127/127 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 134/134 tests; real Git-to-adoption/repair CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -67,6 +67,9 @@ and five E2E scripts on both CLI targets:
 The Git-import head `1c0ce58` passed all three systems, four library targets
 and six E2E scripts on both CLI targets:
 [GitHub Actions run 38881528024](https://github.com/Wyh123456559/mndocmove/actions/runs/38881528024).
+The already-moved-repair head `124e47b` passed all three systems, four library
+targets and six E2E scripts on both CLI targets:
+[GitHub Actions run 38883019106](https://github.com/Wyh123456559/mndocmove/actions/runs/38883019106).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -204,6 +207,24 @@ The real Git E2E now also repairs the actual `git mv` working tree from both Git
 and JSON maps, checks canonical equality/review/current paths, both snapshot sides,
 exact restore, a subsequent move stage and refusal after a later file edit.
 All six existing Wasm E2E scripts were rerun after the shared wire/model change.
+
+Verified adoption adds eight black-box cases, one exact wire-budget white-box
+case and a tested README example. They cover merged/overlapping destination
+prefixes, unmoved destination occupants, seven simultaneous move topologies,
+exact equivalence with the pending plan, stable exchange under reordered input,
+full drift including equal-size valid-link and opaque edits, partial renames,
+already-rewritten input refusal, empty/opaque no-ops, swaps, static media,
+BOM/CRLF/emoji spans, input/array isolation and recovery after refusal.
+Saved baseline reconstruction, strict malformed/unknown/extra data refusal,
+current-path restoration and adopted-first chains are verified on all four
+library targets. The wire preflight matches actual encoded length at the exact
+accepted/refused boundary, using baseline paths rather than longer current paths.
+The existing real Git E2E now verifies adoption/check-renamed, result equivalence,
+review/exact restoration, exclusive/outside-root output and later-edit rejection
+on both local CLI targets. All six Wasm E2Es were rerun after the shared model
+and wire changes; the existing three-OS CI executes the extended script on both
+CLI targets. No new external fixture, dependency or copied implementation/test
+was introduced; existing licenses/provenance in THIRD_PARTY.md still apply.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

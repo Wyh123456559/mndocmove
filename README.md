@@ -88,6 +88,12 @@ This repository has not yet been published to Mooncakes.
   files were already moved, with no pending physical moves. `relinks()` reports
   that historical mapping; save/review/check/replay/restore and ordered chains
   retain the distinction. See [already-moved repair workflow](docs/relink.md).
+- `MovePlan::check_renamed(current)` / `adopt(current)`: verify that a saved
+  pending plan's physical renames were performed with every byte unchanged,
+  then produce a link-only repair, including merged destination directories.
+  CLI: `check-renamed CURRENT_ROOT PENDING_PLAN`, then
+  `adopt CURRENT_ROOT PENDING_PLAN NEW_REPAIR_PLAN`.
+  See [verified adoption and offline demo](docs/adopt.md).
 
 ## Current supported boundary
 

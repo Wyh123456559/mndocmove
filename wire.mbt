@@ -110,7 +110,9 @@ fn decode_moves(value : Json) -> Array[Move] raise MoveError {
 ///|
 // Keep historical repair intent distinct from pending migration operations.
 fn MovePlan::wire_magic(self : MovePlan) -> String {
-  if self.relinks.is_empty() {
+  if self.adopted_from is Some(_) {
+    "mndocmove-adopt"
+  } else if self.relinks.is_empty() {
     "mndocmove"
   } else {
     "mndocmove-relink"
@@ -127,9 +129,16 @@ fn MovePlan::wire_intentions(self : MovePlan) -> Array[Move] {
 }
 
 ///|
+// Adoption retains the pre-move baseline once, rather than duplicating the
+// physical input. Loading derives and validates both intermediate and result.
+fn MovePlan::wire_input(self : MovePlan) -> DocTree {
+  self.adopted_from.unwrap_or(self.original)
+}
+
+///|
 // Array order and uppercase hex make the full input snapshot deterministic.
 fn MovePlan::wire_json(self : MovePlan) -> Json {
-  let files : Array[Json] = self.original.files.map(fn(e) {
+  let files : Array[Json] = self.wire_input().files.map(fn(e) {
     [Json(e.path), Json(hex_bytes(e.data))]
   })
   let moves : Array[Json] = self
@@ -180,9 +189,11 @@ fn wire_profile(name : String) -> Profile raise MoveError {
 fn decode_plan(value : Json) -> MovePlan raise MoveError {
   match value {
     [String(magic), Number(1, ..), String(profile_name), Array(files), moves] => {
-      if magic != "mndocmove" && magic != "mndocmove-relink" {
+      if magic != "mndocmove" &&
+        magic != "mndocmove-relink" &&
+        magic != "mndocmove-adopt" {
         refuse(
-          "InvalidPlan", "", "Unknown plan schema; use a supported migration or relink plan",
+          "InvalidPlan", "", "Unknown plan schema; use a supported migration, relink or adopted plan",
         )
       }
       let profile = wire_profile(profile_name)
@@ -204,6 +215,9 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
       let intentions = decode_moves(moves)
       if magic == "mndocmove-relink" {
         plan_relinks(tree, intentions, profile~)
+      } else if magic == "mndocmove-adopt" {
+        let pending = plan_moves(tree, intentions, profile~)
+        pending.adopt_verified(pending.renamed_input())
       } else {
         plan_moves(tree, intentions, profile~)
       }

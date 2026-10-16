@@ -13,6 +13,14 @@ declares already-performed old-to-current renames. See [repair contract](relink.
 This avoids reinterpreting a repair as pending file moves. Ordinary plan bytes
 retain their original schema. Chains accept a repair as the first saved plan.
 
+Verified adoption uses `mndocmove-adopt` version 1 with the same tuple shape,
+but files are the **pre-move baseline** and moves are historical declarations.
+Loading replans the baseline and derives the unchanged-byte physical input;
+replay checks the supplied current tree against that input. No duplicate
+snapshot or trusted offsets are stored. See [adoption contract](adopt.md).
+Chains accept adopted plans as their first stage, and wire preflight counts
+the actual baseline paths. Empty adoption intents canonicalize to ordinary no-op.
+
 Move input: `[["docs","manual"],["img","assets"]]`.
 
 Full plan:

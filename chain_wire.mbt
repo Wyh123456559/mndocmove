@@ -38,7 +38,7 @@ fn moves_wire_units(moves : Array[Move]) -> Int64 {
 fn MoveChain::wire_units(self : MoveChain) -> Int64 {
   let first = self.plans[0]
   let mut files = 2L
-  for i, file in first.original.files {
+  for i, file in first.wire_input().files {
     if i > 0 {
       files += 1
     }

@@ -257,6 +257,11 @@ pub fn MovePlan::review(
     self.edits.length().to_string() +
     "\n",
   )
+  if self.adopted_from is Some(_) {
+    out.write_string(
+      "Verified move adoption: input paths and every byte match the saved baseline after physical renames.\n",
+    )
+  }
   if !self.relinks.is_empty() {
     out.write_string(
       "Link-only repair; historical renames below are already present. Replay keeps current paths.\n",

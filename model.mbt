@@ -171,6 +171,7 @@ struct MovePlan {
   profile : Profile
   moves : Array[Move]
   relinks : Array[Move]
+  adopted_from : DocTree?
   edits : Array[Edit]
   result : DocTree
 } derive(@debug.Debug)

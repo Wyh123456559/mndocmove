@@ -80,6 +80,11 @@ renames, with uniquely reconstructed old namespaces, explicit historical intent,
 distinct saved plans and full review/check/replay/pre-repair restoration/chain
 workflows for both JSON maps and strict Git rename records.
 
+Implemented fifteenth capability: verified adoption of a saved pending plan
+after physical renames, with exact full-inventory drift reporting, baseline
+ownership for merged destinations, compact saved provenance and guarded
+link-only replay/pre-repair restore/ordered-chain workflows.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

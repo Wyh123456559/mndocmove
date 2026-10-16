@@ -123,6 +123,53 @@ async fn main {
   // The actual git-mv tree has current paths but unchanged old-coordinate URLs.
   let repair = tmp + "/repair.json"
   let current = repo + "/docs"
+  // An existing pending plan can prove that these are physical renames ONLY.
+  let adoption = tmp + "/adopted.json"
+  assert_eq(
+    capture(prefix + ["check-renamed", current, plan], 0).trim().to_owned(),
+    "[\"mndocmove-check\",1,\"source\",2,2,[]]",
+  )
+  ignore(capture(prefix + ["adopt", current, plan, adoption], 0))
+  let adopted_bytes = @fs.read_file(adoption).binary()
+  ignore(capture(prefix + ["adopt", current, plan, adoption], 1))
+  assert_eq(@fs.read_file(adoption).binary(), adopted_bytes)
+  ignore(
+    capture(prefix + ["adopt", current, plan, current + "/inside.json"], 1),
+  )
+  assert_true(!@fs.exists(current + "/inside.json"))
+  let adoption_review = capture(prefix + ["review", adoption], 0)
+  assert_true(adoption_review.contains("Verified move adoption"))
+  assert_true(adoption_review.contains("Link-only repair"))
+  assert_true(!adoption_review.contains("\nmove "))
+  let adopted_output = tmp + "/adopted-output"
+  ignore(capture(prefix + ["replay", current, adoption, adopted_output], 0))
+  assert_eq(
+    @fs.read_file(adopted_output + "/manual/README.md").binary(),
+    @fs.read_file(output + "/manual/README.md").binary(),
+  )
+  assert_eq(
+    @fs.read_file(adopted_output + "/samples/example.mjs").binary(),
+    asset,
+  )
+  ignore(capture(prefix + ["check", adopted_output, adoption, "--result"], 0))
+  let adopted_restore = tmp + "/adopted-restored"
+  ignore(
+    capture(prefix + ["restore", adopted_output, adoption, adopted_restore], 0),
+  )
+  assert_eq(
+    @fs.read_file(adopted_restore + "/manual/README.md").text(),
+    original,
+  )
+  assert_eq(
+    @fs.read_file(adopted_restore + "/samples/example.mjs").binary(),
+    asset,
+  )
+  assert_true(!@fs.exists(adopted_restore + "/README.md"))
+  assert_true(
+    capture(prefix + ["check-renamed", current, adoption], 1).contains(
+      "AdoptPlanKind",
+    ),
+  )
   ignore(capture(prefix + ["relink-git", current, status, "docs", repair], 0))
   ignore(
     capture(
@@ -195,6 +242,15 @@ async fn main {
     ).contains("UnsupportedGitChange"),
   )
   assert_true(!@fs.exists(tmp + "/refused.json"))
+  let drift = capture(prefix + ["check-renamed", current, plan], 1)
+  assert_true(drift.contains("\"modified\",\"manual/README.md\""))
+  assert_true(
+    capture(
+      prefix + ["adopt", current, plan, tmp + "/refused-adoption.json"],
+      1,
+    ).contains("AdoptionMismatch"),
+  )
+  assert_true(!@fs.exists(tmp + "/refused-adoption.json"))
   assert_true(
     capture(prefix + ["replay", current, repair, tmp + "/stale-repair"], 1).contains(
       "StaleSnapshot",
@@ -210,7 +266,7 @@ async fn main {
   println(
     "Git rename E2E passed: " +
     target +
-    "; real Git -z tree diff without commits, baseline planning and already-moved link repair, review/replay/check/restore, repair chain and stale/content-edit refusal. Files retained: " +
+    "; real Git -z tree diff without commits, baseline planning, verified adoption and already-moved link repair, review/replay/check/restore, repair chain and stale/content-edit refusal. Files retained: " +
     tmp,
   )
 }

@@ -8,6 +8,10 @@ logical old tree, validates it, then recomputes preserved-source URL edits.
 This removes the need to physically undo/repeat a set of renames just to obtain
 a guarded migration plan. It is separate from `plan_moves`, whose moves are pending.
 
+If you retained a pending plan from before the physical renames, prefer
+[verified adoption](adopt.md): it detects any concurrent byte/path changes and
+supports merged destination directories using known baseline ownership.
+
 ```text
 moon run cmd/main --target wasm -- relink CURRENT_DOCS already-renamed.json repair-plan.json
 moon run cmd/main --target wasm -- review repair-plan.json
