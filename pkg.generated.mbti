@@ -12,6 +12,8 @@ pub fn moves_from_json(String) -> Array[Move] raise MoveError
 
 pub fn plan_moves(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
 
+pub fn plan_relinks(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
+
 // Errors
 pub(all) suberror MoveError {
   Refused(Diagnostic)
@@ -85,6 +87,7 @@ pub fn MovePlan::merge(Self, Self) -> Self raise MoveError
 pub fn MovePlan::moves(Self) -> Array[Move]
 pub fn MovePlan::preview(Self) -> String
 pub fn MovePlan::profile(Self) -> Profile
+pub fn MovePlan::relinks(Self) -> Array[Move]
 pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::restore(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::review(Self, context? : Int) -> String raise MoveError

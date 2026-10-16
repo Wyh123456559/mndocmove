@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 112/112 tests; Git-rename CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 105/105 tests |
-| Windows x86-64, JS / Node | strict check passed | 105/105 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 112/112 tests; real Git-rename CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 124/124 tests; all six E2E scripts passed, including already-moved repair |
+| Windows x86-64, Wasm-GC | strict check passed | 117/117 tests |
+| Windows x86-64, JS / Node | strict check passed | 117/117 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 124/124 tests; real Git-to-repair CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -64,6 +64,9 @@ four E2E scripts on both CLI targets:
 The parallel-merge head `fdb89cf` passed all three systems, four library targets
 and five E2E scripts on both CLI targets:
 [GitHub Actions run 38880337002](https://github.com/Wyh123456559/mndocmove/actions/runs/38880337002).
+The Git-import head `1c0ce58` passed all three systems, four library targets
+and six E2E scripts on both CLI targets:
+[GitHub Actions run 38881528024](https://github.com/Wyh123456559/mndocmove/actions/runs/38881528024).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -187,6 +190,20 @@ or configured author changes, and verifies saved-plan migration/restoration on
 the licensed README fixture. A real changed-content Git diff is refused as a
 whole. Both Wasm and native CLI workflows executed successfully. CI runs six
 E2E scripts per OS/CLI target; Git is an external test/producer executable only.
+
+Already-moved link repair adds ten black-box cases, one exact wire-budget
+white-box case and a tested README example. They cover reconstructed incoming/
+outgoing/reference links, current-path UTF-16 edit spans, BOM/CRLF/emoji, media/
+responsive/root references, swaps and encoded names, exact pre-repair restore,
+immutable arrays, absent/partial/ambiguous mappings, kind/prefix/path errors,
+old-coordinate refusal without fallback, stale endpoint guards, unknown/malformed
+wire, repair-first chains, parallel-merge refusal and 4096/4097 intent bounds.
+The white-box case checks repair-chain preflight against actual encoded size,
+at the accepted/refused boundary, including Unicode names and historical intents.
+The real Git E2E now also repairs the actual `git mv` working tree from both Git
+and JSON maps, checks canonical equality/review/current paths, both snapshot sides,
+exact restore, a subsequent move stage and refusal after a later file edit.
+All six existing Wasm E2E scripts were rerun after the shared wire/model change.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

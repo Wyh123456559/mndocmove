@@ -52,6 +52,7 @@ pub fn plan_moves(
       original: tree,
       profile,
       moves,
+      relinks: [],
       edits: [],
       result: { files: tree.files.copy(), },
     }
@@ -67,15 +68,22 @@ pub fn plan_moves(
       output.push(Entry::new(moved(file.path, moves), file.data))
     }
   }
-  { original: tree, profile, moves, edits, result: DocTree::new(output), }
+  {
+    original: tree,
+    profile,
+    moves,
+    relinks: [],
+    edits,
+    result: DocTree::new(output),
+  }
 }
 
 ///|
 /// Deterministic derived preview. Preserve the full plan for replay.
 pub fn MovePlan::preview(self : MovePlan) -> String {
-  let moves : Array[Json] = self.moves.map(fn(change) {
-    [Json(change.source), Json(change.destination)]
-  })
+  let moves : Array[Json] = self
+    .wire_intentions()
+    .map(fn(change) { [Json(change.source), Json(change.destination)] })
   let edits : Array[Json] = self.edits.map(fn(e) {
     [
       Json(e.path),
@@ -88,7 +96,13 @@ pub fn MovePlan::preview(self : MovePlan) -> String {
     ]
   })
   let value : Json = [
-    "mndocmove-preview",
+    Json(
+      if self.relinks.is_empty() {
+        "mndocmove-preview"
+      } else {
+        "mndocmove-relink-preview"
+      },
+    ),
     1,
     Json::array(moves),
     Json::array(edits),

@@ -257,6 +257,20 @@ pub fn MovePlan::review(
     self.edits.length().to_string() +
     "\n",
   )
+  if !self.relinks.is_empty() {
+    out.write_string(
+      "Link-only repair; historical renames below are already present. Replay keeps current paths.\n",
+    )
+    for change in self.relinks {
+      out.write_string(
+        "already-renamed " +
+        review_path(change.source) +
+        " -> " +
+        review_path(change.destination) +
+        "\n",
+      )
+    }
+  }
   for file in self.original.files {
     let next = moved(file.path, self.moves)
     if next != file.path {

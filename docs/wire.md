@@ -7,6 +7,12 @@ Maximum JSON text length is 200,000,000 UTF-16 units; maximum nesting is 16.
 The file/tree limits also apply after decoding. A plan embeds the original
 source bytes, so it can be much larger than a preview.
 
+Link-only repair plans use the distinct `mndocmove-relink` magic with version 1;
+their bytes describe the current pre-repair inventory and their final array
+declares already-performed old-to-current renames. See [repair contract](relink.md).
+This avoids reinterpreting a repair as pending file moves. Ordinary plan bytes
+retain their original schema. Chains accept a repair as the first saved plan.
+
 Move input: `[["docs","manual"],["img","assets"]]`.
 
 Full plan:

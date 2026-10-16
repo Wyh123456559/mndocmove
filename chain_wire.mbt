@@ -47,11 +47,11 @@ fn MoveChain::wire_units(self : MoveChain) -> Int64 {
       5
   }
   let first_units = 6L +
-    json_string_units("mndocmove") +
+    json_string_units(first.wire_magic()) +
     1 +
     json_string_units(profile_name(first.profile)) +
     files +
-    moves_wire_units(first.moves)
+    moves_wire_units(first.wire_intentions())
   let mut steps = 2L
   for i in 1..<self.plans.length() {
     if i > 1 {

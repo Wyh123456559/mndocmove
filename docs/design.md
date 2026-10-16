@@ -75,6 +75,11 @@ Implemented thirteenth capability: bounded strict Git exact-rename import with
 explicit repository-root scope, byte-safe NUL records and unfiltered-change
 refusal through a real Git-to-saved-plan migration/review/export/restore workflow.
 
+Implemented fourteenth capability: link-only repair after declared physical
+renames, with uniquely reconstructed old namespaces, explicit historical intent,
+distinct saved plans and full review/check/replay/pre-repair restoration/chain
+workflows for both JSON maps and strict Git rename records.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

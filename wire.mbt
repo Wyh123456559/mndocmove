@@ -108,17 +108,35 @@ fn decode_moves(value : Json) -> Array[Move] raise MoveError {
 }
 
 ///|
-/// Serializes the complete original bytes and moves, never trusted edit offsets.
-/// Array order and uppercase hex make output deterministic on all backends.
+// Keep historical repair intent distinct from pending migration operations.
+fn MovePlan::wire_magic(self : MovePlan) -> String {
+  if self.relinks.is_empty() {
+    "mndocmove"
+  } else {
+    "mndocmove-relink"
+  }
+}
+
+///|
+fn MovePlan::wire_intentions(self : MovePlan) -> Array[Move] {
+  if self.relinks.is_empty() {
+    self.moves
+  } else {
+    self.relinks
+  }
+}
+
+///|
+// Array order and uppercase hex make the full input snapshot deterministic.
 fn MovePlan::wire_json(self : MovePlan) -> Json {
   let files : Array[Json] = self.original.files.map(fn(e) {
     [Json(e.path), Json(hex_bytes(e.data))]
   })
-  let moves : Array[Json] = self.moves.map(fn(m) {
-    [Json(m.source), Json(m.destination)]
-  })
+  let moves : Array[Json] = self
+    .wire_intentions()
+    .map(fn(m) { [Json(m.source), Json(m.destination)] })
   let value : Json = [
-    "mndocmove",
+    Json(self.wire_magic()),
     1,
     Json(
       match self.profile {
@@ -133,7 +151,8 @@ fn MovePlan::wire_json(self : MovePlan) -> Json {
 }
 
 ///|
-/// Serializes the complete original bytes and moves, never trusted edit offsets.
+/// Serializes complete input bytes and pending/historical intentions, never
+/// trusted edit offsets. Ordinary migration plan bytes remain compatible.
 pub fn MovePlan::to_json_string(self : MovePlan) -> String {
   self.wire_json().stringify()
 }
@@ -160,13 +179,12 @@ fn wire_profile(name : String) -> Profile raise MoveError {
 ///|
 fn decode_plan(value : Json) -> MovePlan raise MoveError {
   match value {
-    [
-      String("mndocmove"),
-      Number(1, ..),
-      String(profile_name),
-      Array(files),
-      moves,
-    ] => {
+    [String(magic), Number(1, ..), String(profile_name), Array(files), moves] => {
+      if magic != "mndocmove" && magic != "mndocmove-relink" {
+        refuse(
+          "InvalidPlan", "", "Unknown plan schema; use a supported migration or relink plan",
+        )
+      }
       let profile = wire_profile(profile_name)
       if files.length() > 4096 {
         refuse("FileLimit", "", "Use at most 4096 files")
@@ -182,7 +200,13 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
             )
         }
       }
-      plan_moves(DocTree::new(entries), decode_moves(moves), profile~)
+      let tree = DocTree::new(entries)
+      let intentions = decode_moves(moves)
+      if magic == "mndocmove-relink" {
+        plan_relinks(tree, intentions, profile~)
+      } else {
+        plan_moves(tree, intentions, profile~)
+      }
     }
     _ => {
       refuse(

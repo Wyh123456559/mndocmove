@@ -35,6 +35,8 @@ before writing the merged plan. Inputs are single simultaneous plans; ordered
 chains are not flattened or silently discarded. Use `extend` for ordered stages.
 This does not merge document content, reconcile different source revisions or
 apply Git patches. A normal result keeps the existing version-1 plan wire format.
+Historical link-repair plans refuse with `MergeRelink`; follow such a repair
+with an ordered `then_moves` / `extend` stage instead.
 
 Run `moon run scripts/merge-e2e.mbtx -- wasm` (or `native`) for an offline demo
 using the real licensed Microsoft README/example: independent document/resource

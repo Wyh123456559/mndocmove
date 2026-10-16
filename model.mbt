@@ -153,6 +153,8 @@ pub fn Move::destination(self : Move) -> String {
 /// A replacement in the original Markdown, with an exclusive UTF-16 end.
 /// An empty old_target/new_target denotes the inventory root directory;
 /// File/move operands remain nonempty at validated inventory/plan boundaries.
+/// In a relink plan, path/offset name the current input file; old_target refers
+/// to its declared logical old namespace and new_target to the current namespace.
 pub(all) struct Edit {
   path : String
   start : Int32
@@ -168,6 +170,7 @@ struct MovePlan {
   original : DocTree
   profile : Profile
   moves : Array[Move]
+  relinks : Array[Move]
   edits : Array[Edit]
   result : DocTree
 } derive(@debug.Debug)
@@ -195,6 +198,13 @@ pub fn MovePlan::profile(self : MovePlan) -> Profile {
 ///|
 pub fn MovePlan::moves(self : MovePlan) -> Array[Move] {
   self.moves.copy()
+}
+
+///|
+/// Historical old-to-current renames for a link-only repair plan. Ordinary
+/// migration plans return []; repair plans have no pending file moves().
+pub fn MovePlan::relinks(self : MovePlan) -> Array[Move] {
+  self.relinks.copy()
 }
 
 ///|

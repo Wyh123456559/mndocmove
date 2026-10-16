@@ -120,6 +120,64 @@ async fn main {
   ignore(capture(prefix + ["restore", output, plan, restored], 0))
   assert_eq(@fs.read_file(restored + "/README.md").text(), original)
   assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  // The actual git-mv tree has current paths but unchanged old-coordinate URLs.
+  let repair = tmp + "/repair.json"
+  let current = repo + "/docs"
+  ignore(capture(prefix + ["relink-git", current, status, "docs", repair], 0))
+  ignore(
+    capture(
+      prefix +
+      [
+        "relink",
+        current,
+        "examples/vscode/moves.json",
+        tmp + "/repair-json.json",
+      ],
+      0,
+    ),
+  )
+  assert_eq(
+    @fs.read_file(tmp + "/repair-json.json").binary(),
+    @fs.read_file(repair).binary(),
+  )
+  let evidence = capture(prefix + ["review", repair], 0)
+  assert_true(evidence.contains("Link-only repair"))
+  assert_true(
+    evidence.contains("already-renamed \"README.md\" -> \"manual/README.md\""),
+  )
+  assert_true(!evidence.contains("\nmove "))
+  assert_true(evidence.contains("[example.mjs](../samples/example.mjs)"))
+  ignore(capture(prefix + ["check", current, repair], 0))
+  let repaired = tmp + "/repaired"
+  ignore(capture(prefix + ["replay", current, repair, repaired], 0))
+  assert_eq(
+    @fs.read_file(repaired + "/manual/README.md").binary(),
+    @fs.read_file(output + "/manual/README.md").binary(),
+  )
+  assert_eq(@fs.read_file(repaired + "/samples/example.mjs").binary(), asset)
+  ignore(capture(prefix + ["check", repaired, repair, "--result"], 0))
+  let undone = tmp + "/repair-restored"
+  ignore(capture(prefix + ["restore", repaired, repair, undone], 0))
+  assert_eq(@fs.read_file(undone + "/manual/README.md").text(), original)
+  assert_eq(@fs.read_file(undone + "/samples/example.mjs").binary(), asset)
+  assert_true(!@fs.exists(undone + "/README.md"))
+  @fs.write_file(tmp + "/next-moves.json", "[[\"samples\",\"media\"]]")
+  let chain = tmp + "/repair-chain.json"
+  ignore(
+    capture(
+      prefix + ["extend", current, repair, tmp + "/next-moves.json", chain],
+      0,
+    ),
+  )
+  ignore(capture(prefix + ["replay", current, chain, tmp + "/chain-export"], 0))
+  assert_eq(
+    @fs.read_file(tmp + "/chain-export/manual/README.md").text(),
+    original.replace(
+      old="[example.mjs](./example.mjs)",
+      new="[example.mjs](../media/example.mjs)",
+    ),
+  )
+  assert_eq(@fs.read_file(current + "/manual/README.md").text(), original)
   // Unfiltered Git records expose additions/deletions after a content edit.
   @fs.write_file(
     repo + "/docs/manual/README.md",
@@ -137,12 +195,22 @@ async fn main {
     ).contains("UnsupportedGitChange"),
   )
   assert_true(!@fs.exists(tmp + "/refused.json"))
+  assert_true(
+    capture(prefix + ["replay", current, repair, tmp + "/stale-repair"], 1).contains(
+      "StaleSnapshot",
+    ),
+  )
+  assert_true(!@fs.exists(tmp + "/stale-repair"))
+  assert_eq(
+    @fs.read_file(current + "/manual/README.md").text(),
+    "edited content",
+  )
   assert_eq(@fs.read_file(root + "/README.md").text(), original)
   assert_eq(@fs.read_file(root + "/example.mjs").binary(), asset)
   println(
     "Git rename E2E passed: " +
     target +
-    "; real Git -z tree diff without commits, real README, scoped plan/review/replay/check/restore, modified-content refusal and untouched source. Files retained: " +
+    "; real Git -z tree diff without commits, baseline planning and already-moved link repair, review/replay/check/restore, repair chain and stale/content-edit refusal. Files retained: " +
     tmp,
   )
 }

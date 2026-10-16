@@ -30,6 +30,9 @@ renamed working directory refuses missing sources. `PREFIX` is the exact
 repository-relative documentation root (`docs` above), or `.` for no prefix.
 Outputs must be unused and outside ROOT. No source tree, Git index or branch is
 modified by the CLI. The saved result is an ordinary version-1 plan.
+When the files have already moved, use `relink-git CURRENT_ROOT STATUS PREFIX
+NEW_PLAN` instead, under the [unchanged old-coordinate input contract](relink.md).
+This produces a link-only repair plan and keeps current file paths.
 
 Supported input is a sequence of `R100 NUL old-path NUL new-path NUL`, or empty
 bytes for no moves. Every record must be a complete exact rename. Modified,

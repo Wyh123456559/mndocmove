@@ -223,6 +223,30 @@ test "import exact Git rename intent" {
 }
 ```
 
+Repair unchanged link text after a physical rename:
+
+```mbt check
+///|
+test "repair links at already-moved paths" {
+  let current = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("manual/r.md", "[asset](a.bin)"),
+    @mndocmove.Entry::new("media/a.bin", b"A"),
+  ])
+  let repair = @mndocmove.plan_relinks(current, [
+    @mndocmove.Move::new("r.md", "manual/r.md"),
+    @mndocmove.Move::new("a.bin", "media/a.bin"),
+  ])
+  assert_eq(repair.moves(), [])
+  let saved = @mndocmove.MovePlan::from_json_string(repair.to_json_string())
+  let output = saved.replay(current)
+  assert_eq(
+    output.get("manual/r.md").unwrap().text(),
+    "[asset](../media/a.bin)",
+  )
+  assert_eq(saved.restore(output).entries(), current.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

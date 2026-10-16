@@ -7,6 +7,11 @@ pub fn MovePlan::merge(
   self : MovePlan,
   other : MovePlan,
 ) -> MovePlan raise MoveError {
+  if !self.relinks.is_empty() || !other.relinks.is_empty() {
+    refuse(
+      "MergeRelink", "", "Parallel merge accepts pending file-move plans only; historical relink coordinates cannot be unioned. Follow a repair with then_moves for ordered work",
+    )
+  }
   if profile_name(self.profile) != profile_name(other.profile) {
     refuse(
       "MergeProfile", "", "Parallel plans must use the same syntax profile; regenerate one plan with the intended policy",

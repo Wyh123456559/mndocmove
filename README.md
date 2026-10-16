@@ -84,6 +84,10 @@ This repository has not yet been published to Mooncakes.
   snapshot/profile, coalesce identical moves, refuse conflicts and recompute
   interacting links. CLI: `merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN`.
   See [parallel planning workflow](docs/merge.md).
+- `plan_relinks(current, already_renamed)`: repair old-coordinate links after
+  files were already moved, with no pending physical moves. `relinks()` reports
+  that historical mapping; save/review/check/replay/restore and ordered chains
+  retain the distinction. See [already-moved repair workflow](docs/relink.md).
 
 ## Current supported boundary
 
@@ -177,6 +181,15 @@ The next moves name paths in the preceding result. All stages retain their
 evidence; only the final tree is exported. The original snapshot is still
 required to match. Syntax profiles inherit unless explicitly overridden.
 See [chain limits, wire format and full restore example](docs/chains.md).
+
+## Repair links after renames
+
+If files were already renamed and Markdown still contains unchanged old-coordinate
+links, use `relink CURRENT_ROOT ALREADY_RENAMED_JSON NEW_PLAN` or
+`relink-git CURRENT_ROOT STATUS PREFIX NEW_PLAN` (optional `--static-html`).
+Review and replay export a repaired copy; restore returns the exact current
+paths/bytes from before repair. This does not undo the earlier physical renames.
+See [input assumptions, diagnostics and complete demo](docs/relink.md).
 
 ## Check saved snapshots
 
