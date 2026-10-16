@@ -24,6 +24,7 @@ jobs:
       - run: moon fmt --check
       - run: moon fmt --check scripts/media-e2e.mbtx
       - run: moon fmt --check scripts/merge-e2e.mbtx
+      - run: moon fmt --check scripts/git-e2e.mbtx
       - run: moon info
       - run: git diff --exit-code -- '*.mbti'
       - run: moon check --target wasm --deny-warn
@@ -44,3 +45,6 @@ jobs:
       - run: moon run scripts/media-e2e.mbtx -- native
       - run: moon run scripts/merge-e2e.mbtx -- wasm
       - run: moon run scripts/merge-e2e.mbtx -- native
+      - run: git --version
+      - run: moon run scripts/git-e2e.mbtx -- wasm
+      - run: moon run scripts/git-e2e.mbtx -- native

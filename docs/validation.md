@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 104/104 tests; parallel-merge CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 97/97 tests |
-| Windows x86-64, JS / Node | strict check passed | 97/97 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 104/104 tests; parallel-merge CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 112/112 tests; Git-rename CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 105/105 tests |
+| Windows x86-64, JS / Node | strict check passed | 105/105 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 112/112 tests; real Git-rename CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -61,6 +61,9 @@ targets and the complete Wasm/native E2E matrix:
 The media head `f9699a6` passed all three systems, four library targets and all
 four E2E scripts on both CLI targets:
 [GitHub Actions run 38877811452](https://github.com/Wyh123456559/mndocmove/actions/runs/38877811452).
+The parallel-merge head `fdb89cf` passed all three systems, four library targets
+and five E2E scripts on both CLI targets:
+[GitHub Actions run 38880337002](https://github.com/Wyh123456559/mndocmove/actions/runs/38880337002).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -173,6 +176,17 @@ refuses without mutating either input. The real Microsoft fixture E2E checks
 independently saved plans, equivalent reversed merge, contextual review,
 export/result-check/exact restore, exclusive output and stale-source refusal.
 CI adds that E2E on Wasm/native, making five scripts per OS/CLI target.
+
+Git import adds seven black-box cases and a tested README example. Coverage
+includes reordered exact renames, scoped endpoints, Unicode/spaces/literal percent
+paths, strict UTF-8, every unsupported status category, NUL truncation/extra data,
+quoted/non-NUL formats, duplicate/case-alias records, directory non-inference,
+4096/4097 records and UTF-16 path units, byte/field budgets and reuse after refusal.
+`scripts/git-e2e.mbtx` invokes real Git tree objects/moves/diffs, without commits
+or configured author changes, and verifies saved-plan migration/restoration on
+the licensed README fixture. A real changed-content Git diff is refused as a
+whole. Both Wasm and native CLI workflows executed successfully. CI runs six
+E2E scripts per OS/CLI target; Git is an external test/producer executable only.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

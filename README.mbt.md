@@ -206,6 +206,23 @@ test "merge document and asset intentions" {
 }
 ```
 
+Git name-status bytes can replace handwritten move lists:
+
+```mbt check
+///|
+test "import exact Git rename intent" {
+  let moves = @mndocmove.moves_from_git_name_status(
+    b"R100\x00docs/r.md\x00docs/manual/r.md\x00",
+    root_prefix="docs",
+  )
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "# Guide\n"),
+  ])
+  let plan = @mndocmove.plan_moves(tree, moves)
+  assert_eq(plan.replay(tree).get("manual/r.md").unwrap().text(), "# Guide\n")
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

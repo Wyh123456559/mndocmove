@@ -4,6 +4,12 @@ No upstream application implementation or test cases were ported. The project
 uses public package APIs. Tests were written for this project's contracts;
 format semantics follow CommonMark and URI percent encoding.
 
+The independent Git name-status parser references the official
+[git-diff manual](https://git-scm.com/docs/git-diff), checked 2026-10-16. No Git
+source, prose or tests were copied. Git (an optional external producer / E2E
+tool, GPL-2.0 per [upstream COPYING](https://github.com/git/git/blob/master/COPYING))
+is invoked as a separate executable and is not bundled or linked into this module.
+
 | Material | Version/source | License | Use |
 |---|---|---|---|
 | MoonBit core/runtime | stable 2026-10-12 | Apache-2.0 | Collections, UTF-8, JSON, runtime; generated interfaces/toolchain scaffold |

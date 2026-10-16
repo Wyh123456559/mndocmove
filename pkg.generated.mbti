@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn moves_from_git_name_status(Bytes, root_prefix? : String) -> Array[Move] raise MoveError
+
 pub fn moves_from_json(String) -> Array[Move] raise MoveError
 
 pub fn plan_moves(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError

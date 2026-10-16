@@ -73,6 +73,10 @@ This repository has not yet been published to Mooncakes.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
   plan round trip; loading recomputes edits instead of trusting stored offsets.
 - `moves_from_json`: strict move-pair input. See [wire format](docs/wire.md).
+- `moves_from_git_name_status(bytes, root_prefix="docs")`: strict Git `-z`
+  exact-renames, without silently dropping modifications, additions or deletions.
+  CLI: `plan-git OLD_ROOT STATUS PREFIX NEW_PLAN [--static-html]`.
+  See [Git rename workflow](docs/git.md).
 - `MovePlan::then_moves` / `MoveChain::then_moves`: ordered migration stages
   without intermediate exports; chains support review/check/replay/restore and
   bounded, deterministic saved plans. See [ordered workflows](docs/chains.md).
@@ -233,6 +237,8 @@ moon run scripts/media-e2e.mbtx -- wasm
 moon run scripts/media-e2e.mbtx -- native
 moon run scripts/merge-e2e.mbtx -- wasm
 moon run scripts/merge-e2e.mbtx -- native
+moon run scripts/git-e2e.mbtx -- wasm
+moon run scripts/git-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

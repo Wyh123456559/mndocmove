@@ -1,0 +1,148 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+///|
+async fn git(root : String, args : Array[String]) -> String {
+  let (code, out, err) = @process.collect_output("git", ["-C", root] + args)
+  guard code == 0 else {
+    println(err.text())
+    abort("Git operation failed")
+  }
+  out.text().trim().to_owned()
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected CLI exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+///|
+async fn diff(
+  root : String,
+  before : String,
+  after : String,
+  output : String,
+) -> Unit {
+  ignore(
+    git(root, [
+      "diff",
+      "--no-ext-diff",
+      "--no-textconv",
+      "--no-relative",
+      "--name-status",
+      "-z",
+      "-M100%",
+      "--output=" + output,
+      before,
+      after,
+      "--",
+      "docs",
+    ]),
+  )
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-git-")
+  let repo = tmp + "/repo"
+  @fs.mkdir(repo)
+  @fs.mkdir(repo + "/docs")
+  let root = "examples/vscode/tree"
+  let original = @fs.read_file(root + "/README.md").text()
+  let asset = @fs.read_file(root + "/example.mjs").binary()
+  @fs.write_file(repo + "/docs/README.md", original)
+  @fs.write_file(repo + "/docs/example.mjs", asset)
+  ignore(git(repo, ["init", "--quiet"]))
+  ignore(git(repo, ["config", "core.autocrlf", "false"]))
+  ignore(git(repo, ["add", "--", "docs"]))
+  // Tree objects need no commit or author identity. The actual repo is untouched.
+  let before = git(repo, ["write-tree"])
+  @fs.mkdir(repo + "/docs/manual")
+  @fs.mkdir(repo + "/docs/samples")
+  ignore(git(repo, ["mv", "--", "docs/README.md", "docs/manual/README.md"]))
+  ignore(
+    git(repo, ["mv", "--", "docs/example.mjs", "docs/samples/example.mjs"]),
+  )
+  let after = git(repo, ["write-tree"])
+  let status = tmp + "/renames.z"
+  diff(repo, before, after, status)
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let plan = tmp + "/plan.json"
+  ignore(capture(prefix + ["plan-git", root, status, "docs", plan], 0))
+  let saved = @fs.read_file(plan).binary()
+  ignore(capture(prefix + ["plan-git", root, status, "docs", plan], 1))
+  assert_eq(@fs.read_file(plan).binary(), saved)
+  assert_true(
+    capture(
+      prefix + ["plan-git", root, status, "other", tmp + "/wrong-root.json"],
+      1,
+    ).contains("GitRootScope"),
+  )
+  assert_true(!@fs.exists(tmp + "/wrong-root.json"))
+  let review = capture(prefix + ["review", plan], 0)
+  assert_true(review.contains("[example.mjs](../samples/example.mjs)"))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  assert_eq(
+    @fs.read_file(output + "/manual/README.md").text(),
+    original.replace(
+      old="[example.mjs](./example.mjs)",
+      new="[example.mjs](../samples/example.mjs)",
+    ),
+  )
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), asset)
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  assert_eq(@fs.read_file(restored + "/README.md").text(), original)
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  // Unfiltered Git records expose additions/deletions after a content edit.
+  @fs.write_file(
+    repo + "/docs/manual/README.md",
+    "edited content",
+    create_mode=TruncateExisting,
+  )
+  ignore(git(repo, ["add", "--", "docs"]))
+  let changed = git(repo, ["write-tree"])
+  diff(repo, before, changed, tmp + "/changed.z")
+  assert_true(
+    capture(
+      prefix +
+      ["plan-git", root, tmp + "/changed.z", "docs", tmp + "/refused.json"],
+      1,
+    ).contains("UnsupportedGitChange"),
+  )
+  assert_true(!@fs.exists(tmp + "/refused.json"))
+  assert_eq(@fs.read_file(root + "/README.md").text(), original)
+  assert_eq(@fs.read_file(root + "/example.mjs").binary(), asset)
+  println(
+    "Git rename E2E passed: " +
+    target +
+    "; real Git -z tree diff without commits, real README, scoped plan/review/replay/check/restore, modified-content refusal and untouched source. Files retained: " +
+    tmp,
+  )
+}

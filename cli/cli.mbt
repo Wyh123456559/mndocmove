@@ -193,11 +193,47 @@ async fn extend_saved(
 }
 
 ///|
+async fn read_git_moves(path : String, prefix : String) -> Array[@lib.Move] {
+  if @fs.file_size(path) > 16777216L {
+    stop("GitDiffLimit: name-status input exceeds 16 MiB")
+  }
+  @lib.moves_from_git_name_status(
+    @fs.read_file(path).binary(),
+    root_prefix=if prefix == "." { "" } else { prefix },
+  )
+}
+
+///|
+async fn plan_git(
+  root : String,
+  status : String,
+  prefix : String,
+  output : String,
+  profile : @lib.Profile,
+) -> Unit {
+  let plan = @lib.plan_moves(
+    read_tree(root),
+    read_git_moves(status, prefix),
+    profile~,
+  )
+  @fs.write_file(
+    outside_path(root, output),
+    plan.to_json_string(),
+    create_mode=CreateNew,
+  )
+  println(plan.preview())
+}
+
+///|
 /// Plans, reviews, replays or restores a migration. All filesystem outputs
 /// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["plan-git", root, status, prefix, output] =>
+        plan_git(root, status, prefix, output, CommonMark)
+      ["plan-git", root, status, prefix, output, "--static-html"] =>
+        plan_git(root, status, prefix, output, StaticHtml)
       ["merge", root, left, right, output] => {
         let first = @lib.MovePlan::from_json_string(read_text(left))
         let second = @lib.MovePlan::from_json_string(read_text(right))
@@ -286,7 +322,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove plan-git OLD_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

@@ -71,6 +71,10 @@ Implemented twelfth capability: parallel migration-plan merging from one exact
 snapshot/profile, with coalesced intentions, conflict/union revalidation and
 recomputed shared references through saved-plan CLI review/export/restore.
 
+Implemented thirteenth capability: bounded strict Git exact-rename import with
+explicit repository-root scope, byte-safe NUL records and unfiltered-change
+refusal through a real Git-to-saved-plan migration/review/export/restore workflow.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
