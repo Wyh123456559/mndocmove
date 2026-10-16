@@ -61,3 +61,24 @@ test "review includes source evidence and opaque resource moves" {
   assert_true(review.contains("[opaque asset]"))
 }
 ```
+
+Restore exact source bytes after verifying the migrated snapshot:
+
+```mbt check
+///|
+test "restore from a saved plan without reverse URL rewriting" {
+  let source = "\uFEFF[x](./a%2Etxt?x=1&amp;y=2)\r\n"
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", source),
+    @mndocmove.Entry::new("a.txt", b"\xFF\x00"),
+  ])
+  let plan = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("a.txt", "assets/a.txt"),
+  ])
+  let migrated = plan.replay(tree)
+  let saved = @mndocmove.MovePlan::from_json_string(plan.to_json_string())
+  let original = saved.restore(migrated)
+  assert_eq(original.entries(), tree.entries())
+  assert_eq(original.get("r.md").unwrap().text(), source)
+}
+```

@@ -65,6 +65,8 @@ This repository has not yet been published to Mooncakes.
 - `MovePlan::review(context=3)`: complete file-move manifest plus contextual
   before/after Markdown hunks. CLI: `review PLAN_JSON [CONTEXT_LINES]`.
 - `MovePlan::replay(current_tree)`: refuses stale content, additions or deletions.
+- `MovePlan::restore(migrated_tree)`: checks the complete planned result and
+  returns exact original paths and bytes; refuses later edits instead of merging.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
   plan round trip; loading recomputes edits instead of trusting stored offsets.
 - `moves_from_json`: strict move-pair input. See [wire format](docs/wire.md).
@@ -118,6 +120,20 @@ The report is **for review**, not a runnable patch: its asset manifest is not
 binary patch data. Use `replay` to perform the complete migration and enforce
 the snapshot guard. See [report format and checks](docs/review.md).
 
+## Restore a migration
+
+```text
+moon run cmd/main --target wasm -- restore relocated-docs plan.json restored-docs
+```
+
+This verifies `relocated-docs` against the complete planned result, then exports
+the original snapshot to a new `restored-docs` directory. It restores original
+URL spellings and all file bytes from the saved plan. It requires no access to
+the original source directory. Added, deleted, renamed or edited migrated files
+produce `RestoreMismatch` with the first differing path. Preserve those later
+edits separately; restoration does not merge them. Existing outputs are refused.
+See [restoration semantics and example](docs/restore.md).
+
 Limits: 4096 files, 64 MiB total bytes, 1 MiB per Markdown, 4096 units per
 relative path, no duplicate/ASCII-case-alias paths, file/directory conflicts,
 Windows device names or ambiguous source mappings. Non-ASCII filesystem case
@@ -149,6 +165,8 @@ The E2E script uses a fresh temporary directory and asserts the exact README
 change, byte preservation, stale-plan refusal, exclusive output and exit codes.
 It also forces a real filesystem write failure, checks the retained staging
 diagnostics and retries successfully at the same unused output path.
+Both fixtures are then restored and compared with their original bytes; a
+modified migrated tree is refused without losing its later edits.
 It retains temporary outputs for inspection. See [validation](docs/validation.md)
 for actual local evidence and CI limitations.
 

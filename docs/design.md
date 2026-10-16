@@ -43,8 +43,8 @@ Implemented fourth capability: reserved sibling staging, exact inventory/byte
 readback and no-replace publication, with retained failure diagnostics and a
 real filesystem-failure/retry demonstration.
 
-Next capability: exact restoration from a saved plan, guarded against changes
-to the migrated tree.
+Implemented fifth capability: exact restoration from a saved plan, guarded
+against changes to the migrated tree and exported through verified staging.
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

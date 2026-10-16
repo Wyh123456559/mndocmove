@@ -85,7 +85,7 @@ async fn read_text(path : String) -> String {
 
 ///|
 async fn outside_path(root : String, output : String) -> String {
-  let normalized = output.replace(old="\\", new="/")
+  let normalized = output.replace_all(old="\\", new="/")
   let parts = normalized.split("/").map(fn(s) { s.to_owned() }).to_array()
   let leaf = parts.pop().unwrap_or("")
   if leaf.is_empty() || leaf == "." || leaf == ".." {
@@ -100,8 +100,8 @@ async fn outside_path(root : String, output : String) -> String {
     parts.join("/")
   }
   let parent = @fs.realpath(parent_path)
-  let source = @fs.realpath(root).replace(old="\\", new="/").to_lower()
-  let canonical_parent = parent.replace(old="\\", new="/").to_lower()
+  let source = @fs.realpath(root).replace_all(old="\\", new="/").to_lower()
+  let canonical_parent = parent.replace_all(old="\\", new="/").to_lower()
   let source_prefix = if source.has_suffix("/") { source } else { source + "/" }
   if canonical_parent == source || canonical_parent.has_prefix(source_prefix) {
     stop("OutputInsideRoot: output must be outside source inventory")
@@ -174,7 +174,8 @@ async fn export_tree(
 }
 
 ///|
-/// Runs plan ROOT MOVES_JSON PLAN_JSON or replay ROOT PLAN_JSON NEW_OUTPUT.
+/// Plans, reviews, replays or restores a migration. All filesystem outputs
+/// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
@@ -224,9 +225,14 @@ pub async fn run(args : Array[String]) -> Int32 {
         let tree = plan.replay(read_tree(root))
         export_tree(root, output, tree)
       }
+      ["restore", root, plan_file, output] => {
+        let plan = @lib.MovePlan::from_json_string(read_text(plan_file))
+        let tree = plan.restore(read_tree(root))
+        export_tree(root, output, tree)
+      }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

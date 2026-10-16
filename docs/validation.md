@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 42/42 tests; real README + bat HTML CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 36/36 tests |
-| Windows x86-64, JS / Node | strict check passed | 36/36 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 42/42 tests; native CLI real README + bat HTML E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 51/51 tests; real README + bat HTML migration/restoration CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 44/44 tests |
+| Windows x86-64, JS / Node | strict check passed | 44/44 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 51/51 tests; native CLI real README + bat HTML migration/restoration E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -36,8 +36,12 @@ three OS runners, including native runtime and both CLI E2E targets:
 That run tested 27 cases per target before contextual review was added. The
 subsequent `ed144df` run passed Linux/macOS but failed a Windows native E2E
 assertion: MSVC text-mode stdout adds CRLF to captured review output. The
-script now normalizes only that stdout transport layer; all file assertions
-remain byte-exact. Current changes must pass their own head-specific CI run.
+initial fix in `ea800e9` used a first-occurrence replacement and still failed
+later report lines on Windows native (Linux/macOS passed). The script now uses
+`replace_all` for that stdout transport layer; file assertions remain byte-exact.
+The same audit corrected all-separator path normalization and added a real
+multi-level/backslash path regression. Current changes must pass their own
+head-specific CI run; earlier failures are not reported as successful runs.
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -68,6 +72,16 @@ no-replace publication over an existing empty directory/file, and exact final
 inventory with reserved-looking user filenames. The E2E workflow forces an
 actual overlong-component write failure and checks unpublished final output,
 retained diagnostic files, successful retry and unchanged source/asset bytes.
+
+Restoration adds seven black-box tests and a tested README example. They verify
+exact original bytes/paths across both profiles, noncanonical URL spellings,
+BOM/CRLF/emoji/no-final-newline, binary resources, simultaneous directory swaps,
+wire reload, empty plans/trees, sorted first-difference diagnostics, additions,
+deletions, renames, changed bytes, immutable arrays and reuse after refusal.
+Both real CLI fixtures now perform migration-to-restoration round trips; a
+later Markdown edit is refused and preserved, followed by a successful retry.
+Nested output paths inside the source are refused in slash and backslash
+forms; a backslash-form outside path completes a verified export.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

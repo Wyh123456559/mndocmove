@@ -136,3 +136,37 @@ async test "full export preserves reserved-looking user paths and removes only s
   )
   assert_eq(@fs.readdir(root).length(), 0)
 }
+
+///|
+async test "output containment normalizes every separator in absolute paths" {
+  let tmp = @fs.tmpdir(prefix="mndocmove-separators-test-")
+  let root = tmp + "/source"
+  @fs.mkdir(root + "/nested/deep", recursive=true)
+  @fs.write_file(
+    root + "/nested/deep/asset.bin",
+    b"\x00\x80\xFF",
+    create_mode=CreateNew,
+  )
+  let original = read_tree(root)
+  let inside = root + "/nested/deep/out"
+  for output in [inside, inside.replace_all(old="/", new="\\")] {
+    let refused = try {
+      ignore(outside_path(root, output))
+      false
+    } catch {
+      CliError(message) => message.has_prefix("OutputInsideRoot:")
+      _ => false
+    }
+    assert_true(refused)
+  }
+  assert_true(!@fs.exists(inside))
+  let target = tmp + "/outside-output"
+  let backslash_target = target.replace_all(old="/", new="\\")
+  export_tree(root, backslash_target, original)
+  assert_true(read_tree(target).entries() == original.entries())
+  assert_eq(
+    @fs.read_file(target + "/nested/deep/asset.bin").binary(),
+    b"\x00\x80\xFF",
+  )
+  assert_true(read_tree(root).entries() == original.entries())
+}

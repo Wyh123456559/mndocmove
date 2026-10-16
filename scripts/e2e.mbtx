@@ -15,7 +15,7 @@ async fn capture(args : Array[String], expected : Int) -> String {
   }
   // MSVC's text-mode stdout translates LF to CRLF. Normalize that transport
   // layer for report assertions; exported/source file bytes stay unmodified.
-  out.text().replace(old="\r\n", new="\n")
+  out.text().replace_all(old="\r\n", new="\n")
 }
 
 async fn invoke(args : Array[String], expected : Int) -> Unit {
@@ -98,6 +98,36 @@ async fn main {
   assert_eq(@fs.readdir(tmp, include_hidden=true).filter(fn(name) { name.has_prefix(".mndocmove-stage-") }).length(), 1)
   assert_eq(@fs.read_file("examples/vscode/tree/README.md").text(), original)
   assert_eq(@fs.read_file("examples/vscode/tree/example.mjs").binary(), original_asset)
+  // Restoration uses the saved original bytes, not a reverse rewrite. It
+  // exports a new tree and refuses both existing paths and later edits.
+  let restored = tmp + "/restored"
+  invoke(prefix + ["restore", output, plan, restored], 0)
+  assert_eq(@fs.readdir(restored, sort=true), ["README.md", "example.mjs"])
+  assert_eq(@fs.read_file(restored + "/README.md").binary(), @fs.read_file("examples/vscode/tree/README.md").binary())
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), original_asset)
+  invoke(prefix + ["restore", output, plan, restored], 1)
+  invoke(prefix + ["restore", output, plan, output + "/inside"], 1)
+  assert_true(!@fs.exists(output + "/inside"))
+  let edited = tmp + "/edited-result"
+  @fs.mkdir(edited + "/manual", recursive=true)
+  @fs.mkdir(edited + "/samples")
+  @fs.write_file(edited + "/manual/README.md", expected + "Later edits\n")
+  @fs.write_file(edited + "/samples/example.mjs", original_asset)
+  let retry_restore = tmp + "/retry-restore"
+  let stale_restore = capture(prefix + ["restore", edited, plan, retry_restore], 1)
+  assert_true(stale_restore.contains("RestoreMismatch: manual/README.md:"))
+  assert_true(!@fs.exists(retry_restore))
+  assert_eq(@fs.read_file(edited + "/manual/README.md").text(), expected + "Later edits\n")
+  invoke(prefix + ["restore", output, plan, retry_restore], 0)
+  assert_eq(@fs.read_file(retry_restore + "/README.md").text(), original)
+  assert_eq(@fs.read_file(retry_restore + "/example.mjs").binary(), original_asset)
+  let html_restored = tmp + "/html-restored"
+  invoke(prefix + ["restore", html_output, html_plan, html_restored], 0)
+  assert_eq(@fs.read_file(html_restored + "/header.md").text(), html_source)
+  assert_eq(@fs.read_file(html_restored + "/doc/logo-header.svg").binary(), logo)
+  assert_eq(@fs.read_file(output + "/manual/README.md").text(), expected)
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), original_asset)
+  println("Restore E2E passed: original paths and bytes, both syntax profiles, stale result refusal, later edits preserved, retry and exclusive output.")
   println("Staged export E2E passed: actual write failure, unpublished final path, retained diagnostics, successful retry and exact asset bytes.")
   println("Static HTML E2E passed: bat header, profile opt-in, saved-plan replay, exact source edit and logo bytes.")
   println("E2E passed: " + target + " (real README relocation, bytes, stale plan, exclusive output, usage). Files retained: " + tmp)
