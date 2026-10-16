@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 97/97 tests; all four E2E scripts passed |
-| Windows x86-64, Wasm-GC | strict check passed | 90/90 tests |
-| Windows x86-64, JS / Node | strict check passed | 90/90 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 97/97 tests; real-media CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 104/104 tests; parallel-merge CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 97/97 tests |
+| Windows x86-64, JS / Node | strict check passed | 97/97 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 104/104 tests; parallel-merge CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -58,6 +58,9 @@ scripts on both CLI targets:
 The width-responsive head `c6a1e11` passed all three systems, all four library
 targets and the complete Wasm/native E2E matrix:
 [GitHub Actions run 38851796463](https://github.com/Wyh123456559/mndocmove/actions/runs/38851796463).
+The media head `f9699a6` passed all three systems, four library targets and all
+four E2E scripts on both CLI targets:
+[GitHub Actions run 38877811452](https://github.com/Wyh123456559/mndocmove/actions/runs/38877811452).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -160,6 +163,16 @@ media E2E uses pinned CC0 WebM/MP3 plus authored SVG/WebVTT and checks all six
 rewritten references, full result inventory, exact exported/restored resource
 bytes, profile opt-in and refusal to overwrite later video edits. No codec or
 browser playback claim follows from these path/byte checks.
+
+Parallel-plan merge adds six black-box cases and a tested README example:
+interacting links and same-line spans, commutativity/idempotence, exact source
+comparison including equal-size opaque changes, profile/intention/prefix/path
+conflicts, safe shared directories, media syntax and byte-exact wire/restore.
+All 4096 identical intentions coalesce at the limit; a 4097-intention union
+refuses without mutating either input. The real Microsoft fixture E2E checks
+independently saved plans, equivalent reversed merge, contextual review,
+export/result-check/exact restore, exclusive output and stale-source refusal.
+CI adds that E2E on Wasm/native, making five scripts per OS/CLI target.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

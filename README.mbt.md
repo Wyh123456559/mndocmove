@@ -182,6 +182,30 @@ test "relocate a video poster and caption track" {
 }
 ```
 
+Combine independent plans from one shared snapshot:
+
+```mbt check
+///|
+test "merge document and asset intentions" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](a.bin)"),
+    @mndocmove.Entry::new("a.bin", b"A"),
+  ])
+  let docs = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("r.md", "manual/r.md"),
+  ])
+  let assets = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("a.bin", "media/a.bin"),
+  ])
+  let merged = docs.merge(assets)
+  assert_eq(
+    merged.replay(tree).get("manual/r.md").unwrap().text(),
+    "[asset](../media/a.bin)",
+  )
+  assert_eq(merged.to_json_string(), assets.merge(docs).to_json_string())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

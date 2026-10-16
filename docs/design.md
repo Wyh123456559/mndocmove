@@ -67,6 +67,10 @@ Implemented eleventh capability: embedded video/audio, alternate media sources,
 posters and caption tracks, with explicit selection/boolean metadata validation,
 real CC0 sample review/replay/check/restore and later binary-edit protection.
 
+Implemented twelfth capability: parallel migration-plan merging from one exact
+snapshot/profile, with coalesced intentions, conflict/union revalidation and
+recomputed shared references through saved-plan CLI review/export/restore.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

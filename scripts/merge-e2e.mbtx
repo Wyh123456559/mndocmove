@@ -1,0 +1,99 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit code")
+  }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-merge-")
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let source = "examples/vscode/tree"
+  let original = @fs.read_file(source + "/README.md").text()
+  let asset = @fs.read_file(source + "/example.mjs").binary()
+  let docs = tmp + "/docs.json"
+  let assets = tmp + "/assets.json"
+  @fs.write_file(
+    tmp + "/docs-moves.json",
+    "[[\"README.md\",\"manual/README.md\"]]",
+  )
+  @fs.write_file(
+    tmp + "/asset-moves.json",
+    "[[\"example.mjs\",\"samples/example.mjs\"]]",
+  )
+  ignore(capture(prefix + ["plan", source, tmp + "/docs-moves.json", docs], 0))
+  ignore(
+    capture(prefix + ["plan", source, tmp + "/asset-moves.json", assets], 0),
+  )
+  let merged = tmp + "/merged.json"
+  ignore(capture(prefix + ["merge", source, docs, assets, merged], 0))
+  ignore(
+    capture(prefix + ["merge", source, assets, docs, tmp + "/reverse.json"], 0),
+  )
+  let wire = @fs.read_file(merged).binary()
+  assert_eq(@fs.read_file(tmp + "/reverse.json").binary(), wire)
+  ignore(capture(prefix + ["merge", source, docs, assets, merged], 1))
+  assert_eq(@fs.read_file(merged).binary(), wire)
+  let review = capture(prefix + ["review", merged], 0)
+  assert_true(review.contains("[example.mjs](../samples/example.mjs)"))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", source, merged, output], 0))
+  assert_eq(
+    @fs.read_file(output + "/manual/README.md").text(),
+    original.replace(
+      old="[example.mjs](./example.mjs)",
+      new="[example.mjs](../samples/example.mjs)",
+    ),
+  )
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), asset)
+  ignore(capture(prefix + ["check", output, merged, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, merged, restored], 0))
+  assert_eq(@fs.read_file(restored + "/README.md").text(), original)
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  @fs.write_file(
+    restored + "/README.md",
+    "later edit",
+    create_mode=TruncateExisting,
+  )
+  assert_true(
+    capture(prefix + ["merge", restored, docs, assets, tmp + "/stale.json"], 1).contains(
+      "StaleSnapshot",
+    ),
+  )
+  assert_true(!@fs.exists(tmp + "/stale.json"))
+  assert_eq(@fs.read_file(source + "/README.md").text(), original)
+  assert_eq(@fs.read_file(source + "/example.mjs").binary(), asset)
+  println(
+    "Parallel merge E2E passed: " +
+    target +
+    "; real README, interacting edits recomputed, commutative saved plan, exact restore, existing output and stale source refusal. Files retained: " +
+    tmp,
+  )
+}

@@ -198,6 +198,18 @@ async fn extend_saved(
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["merge", root, left, right, output] => {
+        let first = @lib.MovePlan::from_json_string(read_text(left))
+        let second = @lib.MovePlan::from_json_string(read_text(right))
+        let merged = first.merge(second)
+        ignore(merged.replay(read_tree(root)))
+        @fs.write_file(
+          outside_path(root, output),
+          merged.to_json_string(),
+          create_mode=CreateNew,
+        )
+        println(merged.preview())
+      }
       ["extend", root, saved, moves, output] =>
         extend_saved(root, saved, moves, output, None)
       ["extend", root, saved, moves, output, "--static-html"] =>
@@ -274,7 +286,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

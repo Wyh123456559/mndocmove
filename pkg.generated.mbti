@@ -79,6 +79,7 @@ type MovePlan derive(@debug.Debug)
 pub fn MovePlan::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport
 pub fn MovePlan::edits(Self) -> Array[Edit]
 pub fn MovePlan::from_json_string(String) -> Self raise MoveError
+pub fn MovePlan::merge(Self, Self) -> Self raise MoveError
 pub fn MovePlan::moves(Self) -> Array[Move]
 pub fn MovePlan::preview(Self) -> String
 pub fn MovePlan::profile(Self) -> Profile

@@ -76,6 +76,10 @@ This repository has not yet been published to Mooncakes.
 - `MovePlan::then_moves` / `MoveChain::then_moves`: ordered migration stages
   without intermediate exports; chains support review/check/replay/restore and
   bounded, deterministic saved plans. See [ordered workflows](docs/chains.md).
+- `MovePlan::merge(other)`: combine parallel intentions from the same source
+  snapshot/profile, coalesce identical moves, refuse conflicts and recompute
+  interacting links. CLI: `merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN`.
+  See [parallel planning workflow](docs/merge.md).
 
 ## Current supported boundary
 
@@ -227,6 +231,8 @@ moon run scripts/chain-e2e.mbtx -- wasm
 moon run scripts/chain-e2e.mbtx -- native
 moon run scripts/media-e2e.mbtx -- wasm
 moon run scripts/media-e2e.mbtx -- native
+moon run scripts/merge-e2e.mbtx -- wasm
+moon run scripts/merge-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README
