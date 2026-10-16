@@ -59,6 +59,10 @@ with typed changes, deterministic JSON and a read-only CLI/CI verification flow.
 Implemented ninth capability: ordered migration chains against intermediate
 snapshots, with per-stage evidence, compact saved stages, bounded resources and
 one verified final export/exact restoration workflow.
+Implemented tenth capability: width-based responsive image sets, exact numerical
+duplicate/mixed-mode checks and a bounded static source-size grammar, with real
+PNG migration/review/restore and explicit refusal of unknown CSS semantics.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

@@ -234,7 +234,7 @@ test "responsive malformed candidate grammars return positioned diagnostics and 
       "assets/a.png 1x,assets/b.png 2x", "assets/a.png 0x", "assets/a.png 0.000000x",
       "assets/a.png -1x", "assets/a.png +1x", "assets/a.png .5x", "assets/a.png 1.x",
       "assets/a.png 1e2x", "assets/a.png 1X", "assets/a.png 1000000000x", "assets/a.png 0.0000001x",
-      "assets/a.png 1x 2x", "assets/a.png 320w", "assets/a.png 1h", "assets/a.png 1x, assets/b.png 01.000000x",
+      "assets/a.png 1x 2x", "assets/a.png 0w", "assets/a.png 1h", "assets/a.png 1x, assets/b.png 01.000000x",
       "assets/a.png, assets/b.png 1x", "assets/a.png 1.500x, assets/b.png 01.5x",
       "assets/a,b.png 1x", "assets/a&#44;b.png 1x", "assets/a&#32;b.png 1x", "assets/a&Tab;b.png 1x",
       "assets/a.png&#32;1x", "assets/a.png 1&#120;", "data:image/png;base64, AAAA 1x",

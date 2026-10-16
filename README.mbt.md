@@ -130,6 +130,31 @@ test "preserve responsive density descriptors during relocation" {
 }
 ```
 
+Width sets preserve layout metadata while moving resources:
+
+```mbt check
+///|
+test "relocate a width-based responsive image" {
+  let source = "<img sizes='(max-width: 40em) 100vw, 800px' srcset='a.png 320w, b.png 640w'>"
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", source),
+    @mndocmove.Entry::new("a.png", b"A"),
+    @mndocmove.Entry::new("b.png", b"B"),
+  ])
+  let plan = @mndocmove.plan_moves(
+    tree,
+    [@mndocmove.Move::new("r.md", "manual/r.md")],
+    profile=StaticHtml,
+  )
+  let output = plan.replay(tree)
+  assert_eq(
+    output.get("manual/r.md").unwrap().text(),
+    "<img sizes='(max-width: 40em) 100vw, 800px' srcset='../a.png 320w, ../b.png 640w'>",
+  )
+  assert_eq(plan.restore(output).entries(), tree.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

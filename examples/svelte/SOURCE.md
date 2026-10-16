@@ -22,3 +22,8 @@ The authored move list puts the header in `manual` and the images in `art`.
 Both the dark-mode `source[srcset]` and the fallback `img[src]` must become
 `../art/...`. The image bytes and all non-URL markup must survive replay and
 exact restoration. CI uses these committed files offline.
+
+`tree/width.md` is authored by this project, under Apache-2.0; it is not an
+upstream README excerpt. It reuses the same unmodified PNGs (both 2500px wide)
+to exercise width descriptors and static source sizes. The original `header.md`
+and all upstream asset/license hashes above remain unchanged.

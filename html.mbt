@@ -159,6 +159,8 @@ fn html_destinations(
       html_fail(path, tag_start, "Unsupported HTML tag: " + tag)
     }
     let attributes : Set[String] = Set([])
+    let mut width_srcset = false
+    let mut sizes_offset : Int32? = None
     let mut ended = false
     while i <= last {
       let before_space = i
@@ -198,13 +200,14 @@ fn html_destinations(
       let is_url = (tag == "a" && attr == "href") ||
         (tag == "img" && attr == "src")
       let is_srcset = (tag == "img" || tag == "source") && attr == "srcset"
+      let is_sizes = (tag == "img" || tag == "source") && attr == "sizes"
       let safe = [
           "id", "class", "title", "alt", "width", "height", "align", "role", "target",
           "rel", "loading", "decoding", "border", "colspan", "rowspan", "open",
         ].contains(attr) ||
         attr.has_prefix("aria-") ||
         (tag == "source" && (attr == "media" || attr == "type"))
-      if !is_url && !is_srcset && !safe {
+      if !is_url && !is_srcset && !is_sizes && !safe {
         html_fail(
           path,
           start,
@@ -245,7 +248,12 @@ fn html_destinations(
         html_fail(path, value_start, "Template attributes are unsupported")
       }
       if is_srcset {
-        result.append(srcset_destinations(raw, path, value_start))
+        let (candidates, width) = srcset_destinations(raw, path, value_start)
+        width_srcset = width
+        result.append(candidates)
+      } else if is_sizes {
+        validate_sizes(raw, path, value_start)
+        sizes_offset = Some(value_start)
       } else if is_url && !raw.is_empty() {
         result.push({
           first: value_start,
@@ -258,6 +266,9 @@ fn html_destinations(
     }
     if !ended {
       html_fail(path, tag_start, "Unterminated HTML tag")
+    }
+    if sizes_offset is Some(at) && !width_srcset {
+      html_fail(path, at, "Sizes requires a width-based srcset on the same tag")
     }
   }
   result

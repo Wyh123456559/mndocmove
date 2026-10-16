@@ -18,7 +18,8 @@ Supported tags (ASCII case insensitive): `a`, `img`, `p`, `div`, `span`,
 `b`, `i`, `code`, `pre`, `blockquote`, `sup`, `sub`, `kbd`, `samp`, `picture`, `source`.
 
 URL-bearing attributes are `a[href]`, `img[src]` and individual candidates in
-`img[srcset]` / `source[srcset]`. See the [strict srcset subset](srcset.md).
+`img[srcset]` / `source[srcset]`. Width sets can retain supported static `sizes`.
+See the [strict srcset and sizes subset](srcset.md).
 Preserved
 attributes are `id`, `class`, `title`, `alt`, `width`, `height`, `align`,
 `role`, `target`, `rel`, `loading`, `decoding`, `border`, `colspan`, `rowspan`,
@@ -26,7 +27,7 @@ attributes are `id`, `class`, `title`, `alt`, `width`, `height`, `align`,
 omit a value. Duplicate attributes are refused ignoring ASCII case.
 `source[media]` and `source[type]` are preserved selection metadata.
 Other attributes fail rather than hiding a possible URL grammar, including
-`data-src`, `sizes`, `style`, event handlers, SVG `xlink:href` and audio/video sources.
+`data-src`, `style`, event handlers, SVG `xlink:href` and audio/video sources.
 
 URL entities must be recognized and semicolon terminated; use `&amp;` for
 query ampersands. Unknown/legacy unterminated references, replacement/invalid

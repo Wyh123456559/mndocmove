@@ -109,7 +109,7 @@ This moves a [real bat README header and logo](examples/bat/SOURCE.md), changing
 only its local `src` to `../art/logo-header.svg`. The saved plan records the
 profile, so replay needs no extra flag. Attribute case, quote style, comments
 and non-URL source remain intact. This is a strict static subset: unsupported
-tags / attributes, width-based `srcset` / `sizes`, inline styles, scripts, `<base>`, templates,
+tags / attributes, unsupported CSS in `sizes`, inline styles, scripts, `<base>`, templates,
 unquoted attribute values, duplicate attributes and ambiguous entities fail
 explicitly. See [exact HTML boundary](docs/html-profile.md).
 
@@ -122,8 +122,10 @@ moon run cmd/main --target wasm -- replay examples/svelte/tree responsive-plan.j
 
 This moves a [verbatim Svelte README header and both PNGs](examples/svelte/SOURCE.md).
 The dark-mode `source[srcset]` and fallback `img[src]` stay aligned. Multiple
-`img/srcset` or `source/srcset` candidates with decimal `x` densities are supported;
-their descriptors, separators, media/type metadata and non-URL text are preserved.
+`img/srcset` or `source/srcset` candidates with decimal `x` densities or integer
+`w` widths are supported, with a documented static `sizes` subset. The authored
+`width.md` in the same tree uses the real 2500px banners. Descriptors, separators,
+sizes/media/type metadata and non-URL text are preserved.
 Unknown grammars refuse the complete plan. See [responsive subset](docs/srcset.md).
 
 ## Review before replay

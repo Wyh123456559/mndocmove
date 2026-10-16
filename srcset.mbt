@@ -65,9 +65,10 @@ fn srcset_destinations(
   raw : String,
   path : String,
   offset : Int32,
-) -> Array[Destination] raise MoveError {
+) -> (Array[Destination], Bool) raise MoveError {
   let result : Array[Destination] = []
   let densities : Set[String] = Set([])
+  let mut width_mode : Bool? = None
   let mut i = 0
   while i < raw.length() && html_space(raw[i]) {
     i += 1
@@ -115,16 +116,26 @@ fn srcset_destinations(
     while i < raw.length() && !html_space(raw[i]) && raw[i] != 44 {
       i += 1
     }
-    let key = srcset_density(
-      raw[descriptor_start:i].to_owned(),
-      path,
-      offset + descriptor_start,
-    )
+    let descriptor = raw[descriptor_start:i].to_owned()
+    let width = descriptor.has_suffix("w")
+    if width_mode is Some(previous) && previous != width {
+      html_fail(
+        path,
+        offset + descriptor_start,
+        "Do not mix w and x (including implicit 1x) srcset descriptors",
+      )
+    }
+    width_mode = Some(width)
+    let key = if width {
+      srcset_width(descriptor, path, offset + descriptor_start)
+    } else {
+      srcset_density(descriptor, path, offset + descriptor_start)
+    }
     if densities.contains(key) {
       html_fail(
         path,
         offset + descriptor_start,
-        "Duplicate srcset density (an omitted descriptor is 1x)",
+        "Duplicate srcset width or density (an omitted descriptor is 1x)",
       )
     }
     densities.add(key)
@@ -135,7 +146,7 @@ fn srcset_destinations(
       html_fail(
         path,
         offset + i,
-        "Use one decimal x descriptor per srcset candidate",
+        "Use one positive integer w or decimal x descriptor per srcset candidate",
       )
     }
     result.push({
@@ -162,5 +173,33 @@ fn srcset_destinations(
       html_fail(path, offset + i, "Trailing srcset comma has no candidate")
     }
   }
-  result
+  (result, width_mode.unwrap_or(false))
+}
+
+///|
+fn srcset_width(
+  descriptor : String,
+  path : String,
+  offset : Int32,
+) -> String raise MoveError {
+  let number = descriptor[:descriptor.length() - 1]
+  if number.length() < 1 || number.length() > 9 {
+    html_fail(
+      path, offset, "Srcset widths need 1-9 decimal digits followed by w",
+    )
+  }
+  for i in 0..<number.length() {
+    if number[i] < 48 || number[i] > 57 {
+      html_fail(path, offset + i, "Srcset widths must be positive integers")
+    }
+  }
+  let mut first = 0
+  while first + 1 < number.length() && number[first] == 48 {
+    first += 1
+  }
+  let key = number[first:].to_owned()
+  if key == "0" {
+    html_fail(path, offset, "Srcset width must be greater than zero")
+  }
+  key
 }

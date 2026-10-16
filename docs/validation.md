@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 84/84 tests; full migration/restoration, snapshot checks and chain E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 77/77 tests |
-| Windows x86-64, JS / Node | strict check passed | 77/77 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 84/84 tests; real-fixture snapshot-check and three-stage chain CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 90/90 tests; full migration/restoration, snapshot checks and chain E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 83/83 tests |
+| Windows x86-64, JS / Node | strict check passed | 83/83 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 90/90 tests |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -52,6 +52,9 @@ The responsive-image head `bc0fba7` passed all three systems:
 The complete snapshot-report head `d29f332` passed all three systems and both
 legacy/new CLI workflows:
 [GitHub Actions run 38848072096](https://github.com/Wyh123456559/mndocmove/actions/runs/38848072096).
+The ordered-chain head `2db6b8d` passed all three systems and all three E2E
+scripts on both CLI targets:
+[GitHub Actions run 38849187092](https://github.com/Wyh123456559/mndocmove/actions/runs/38849187092).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -132,6 +135,16 @@ The offline chain E2E performs three ordered stages on the real Microsoft
 fixture, endpoint checks and exact restore, while refusing stale source and
 existing/inside-source output plan paths. Current CI runs all three E2E scripts
 on Wasm/native in addition to the four library targets on every OS.
+
+Width-based responsive relocation adds five black-box cases and a tested README
+example. Coverage includes exact width equality with leading zeros, mixed/implicit
+density refusal, both attribute orders, external/query URLs, BOM/CRLF/emoji,
+strict CSS lengths/conditions, Unicode whitespace and unknown CSS refusal,
+32/33 entry and 4096/4097 UTF-16 sizes limits, source spans, deterministic wire,
+review/check/restore and reuse after refusal. The existing Svelte E2E now also
+migrates the authored width page with the real unmodified 2500px PNGs and checks
+exact source/metadata preservation and restored bytes. Public signatures and
+the existing plan wire representation are unchanged (`moon info` verified).
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.
