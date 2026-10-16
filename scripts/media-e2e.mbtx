@@ -1,0 +1,107 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit code: " + code.to_string())
+  }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-media-")
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let root = "examples/media/tree"
+  let original = @fs.read_file(root + "/README.md").text()
+  let assets = ["flower.webm", "t-rex-roar.mp3", "poster.svg", "captions.vtt"]
+  let bytes : Array[(String, Bytes)] = []
+  for name in assets {
+    bytes.push((name, @fs.read_file(root + "/assets/" + name).binary()))
+  }
+  let plan = tmp + "/plan.json"
+  ignore(
+    capture(
+      prefix +
+      ["plan", root, "examples/media/moves.json", tmp + "/refused.json"],
+      1,
+    ),
+  )
+  assert_true(!@fs.exists(tmp + "/refused.json"))
+  ignore(
+    capture(
+      prefix +
+      ["plan", root, "examples/media/moves.json", plan, "--static-html"],
+      0,
+    ),
+  )
+  let review = capture(prefix + ["review", plan], 0)
+  assert_true(review.contains("poster=\"../media/poster.svg\""))
+  assert_true(review.contains("src=\"../media/flower.webm\""))
+  assert_true(review.contains("src=\"../media/captions.vtt\""))
+  assert_true(review.contains("src=\"../media/t-rex-roar.mp3\""))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  assert_eq(
+    @fs.read_file(output + "/manual/README.md").text(),
+    original.replace_all(old="assets/", new="../media/"),
+  )
+  for (name, data) in bytes {
+    assert_eq(@fs.read_file(output + "/media/" + name).binary(), data)
+  }
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  assert_eq(@fs.read_file(restored + "/README.md").text(), original)
+  for (name, data) in bytes {
+    assert_eq(@fs.read_file(restored + "/assets/" + name).binary(), data)
+  }
+  // A later video edit must not be overwritten or restored from a stale plan.
+  @fs.write_file(
+    output + "/media/flower.webm",
+    b"later video edit",
+    create_mode=TruncateExisting,
+  )
+  let diagnostic = capture(
+    prefix + ["restore", output, plan, tmp + "/refused-restore"],
+    1,
+  )
+  assert_true(diagnostic.contains("RestoreMismatch"))
+  assert_true(!@fs.exists(tmp + "/refused-restore"))
+  assert_eq(
+    @fs.read_file(output + "/media/flower.webm").binary(),
+    b"later video edit",
+  )
+  assert_eq(@fs.read_file(root + "/README.md").text(), original)
+  for (name, data) in bytes {
+    assert_eq(@fs.read_file(root + "/assets/" + name).binary(), data)
+  }
+  println(
+    "Media E2E passed: " +
+    target +
+    "; real CC0 WebM/MP3, poster/track/fallback links, review/check/replay/restore, exact bytes and later edit refusal. Files retained: " +
+    tmp,
+  )
+}

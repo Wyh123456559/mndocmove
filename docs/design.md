@@ -63,6 +63,10 @@ Implemented tenth capability: width-based responsive image sets, exact numerical
 duplicate/mixed-mode checks and a bounded static source-size grammar, with real
 PNG migration/review/restore and explicit refusal of unknown CSS semantics.
 
+Implemented eleventh capability: embedded video/audio, alternate media sources,
+posters and caption tracks, with explicit selection/boolean metadata validation,
+real CC0 sample review/replay/check/restore and later binary-edit protection.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

@@ -154,7 +154,8 @@ fn html_destinations(
         "a", "img", "p", "div", "span", "details", "summary", "br", "hr", "figure",
         "figcaption", "table", "thead", "tbody", "tr", "td", "th", "ul", "ol", "li",
         "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "b", "i", "code", "pre",
-        "blockquote", "sup", "sub", "kbd", "samp", "picture", "source",
+        "blockquote", "sup", "sub", "kbd", "samp", "picture", "source", "video",
+        "audio", "track",
       ].contains(tag) {
       html_fail(path, tag_start, "Unsupported HTML tag: " + tag)
     }
@@ -197,14 +198,14 @@ fn html_destinations(
         html_fail(path, start, "Duplicate HTML attribute: " + attr)
       }
       attributes.add(attr)
-      let is_url = (tag == "a" && attr == "href") ||
-        (tag == "img" && attr == "src")
+      let is_url = html_url_attribute(tag, attr)
       let is_srcset = (tag == "img" || tag == "source") && attr == "srcset"
       let is_sizes = (tag == "img" || tag == "source") && attr == "sizes"
       let safe = [
           "id", "class", "title", "alt", "width", "height", "align", "role", "target",
           "rel", "loading", "decoding", "border", "colspan", "rowspan", "open",
         ].contains(attr) ||
+        media_attribute(tag, attr) ||
         attr.has_prefix("aria-") ||
         (tag == "source" && (attr == "media" || attr == "type"))
       if !is_url && !is_srcset && !is_sizes && !safe {
@@ -219,9 +220,9 @@ fn html_destinations(
         i += 1
       }
       if i > last || source[i] != 61 {
-        if attr != "open" || tag != "details" {
+        if !html_boolean_attribute(tag, attr) {
           html_fail(
-            path, start, "Only details/open may omit an attribute value",
+            path, start, "Only supported boolean attributes may omit a value",
           )
         }
         i = after_name
@@ -247,6 +248,14 @@ fn html_destinations(
       if raw.contains("{{") || raw.contains("${") || raw.contains("<%") {
         html_fail(path, value_start, "Template attributes are unsupported")
       }
+      validate_media_attribute(tag, attr, raw, path, value_start)
+      if is_url &&
+        raw.is_empty() &&
+        (media_tag(tag) || tag == "source" || tag == "track") {
+        html_fail(
+          path, value_start, "Media resource URLs must be nonempty; provide an inventory path or an explicit external URL",
+        )
+      }
       if is_srcset {
         let (candidates, width) = srcset_destinations(raw, path, value_start)
         width_srcset = width
@@ -269,6 +278,13 @@ fn html_destinations(
     }
     if sizes_offset is Some(at) && !width_srcset {
       html_fail(path, at, "Sizes requires a width-based srcset on the same tag")
+    }
+    if tag == "source" &&
+      attributes.contains("src") &&
+      (attributes.contains("srcset") || attributes.contains("sizes")) {
+      html_fail(
+        path, tag_start, "Do not combine media source/src with picture source/srcset or sizes on the same tag",
+      )
     }
   }
   result

@@ -155,6 +155,33 @@ test "relocate a width-based responsive image" {
 }
 ```
 
+Embedded media uses the same guarded plans:
+
+```mbt check
+///|
+test "relocate a video poster and caption track" {
+  let source = "<video src='clip.webm' poster='poster.svg' controls><track src='captions.vtt' kind='captions' default></video>"
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", source),
+    @mndocmove.Entry::new("clip.webm", b"video"),
+    @mndocmove.Entry::new("poster.svg", b"<svg/>"),
+    @mndocmove.Entry::new("captions.vtt", b"WEBVTT\n"),
+  ])
+  let plan = @mndocmove.plan_moves(
+    tree,
+    [@mndocmove.Move::new("r.md", "manual/r.md")],
+    profile=StaticHtml,
+  )
+  let saved = @mndocmove.MovePlan::from_json_string(plan.to_json_string())
+  let output = saved.replay(tree)
+  assert_eq(
+    output.get("manual/r.md").unwrap().text(),
+    "<video src='../clip.webm' poster='../poster.svg' controls><track src='../captions.vtt' kind='captions' default></video>",
+  )
+  assert_eq(saved.restore(output).entries(), tree.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

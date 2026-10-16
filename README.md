@@ -59,8 +59,8 @@ This repository has not yet been published to Mooncakes.
 - `Move::new(old, new)` and `plan_moves(tree, moves)`: simultaneous file or
   directory-prefix moves, minimal source edits, complete projected inventory.
 - `Profile::StaticHtml` via `plan_moves(tree,moves,profile=StaticHtml)`: explicit
-  support for quoted `<a href>` / `<img src>` and responsive image candidates
-  in Markdown. The default
+  support for quoted `<a href>` / `<img src>`, responsive image candidates and
+  embedded video/audio/poster/caption resources in Markdown. The default
   `CommonMark` profile retains its conservative HTML refusal.
 - `MovePlan::edits/moves/preview`: independent review data.
 - `MovePlan::review(context=3)`: complete file-move manifest plus contextual
@@ -127,6 +127,21 @@ The dark-mode `source[srcset]` and fallback `img[src]` stay aligned. Multiple
 `width.md` in the same tree uses the real 2500px banners. Descriptors, separators,
 sizes/media/type metadata and non-URL text are preserved.
 Unknown grammars refuse the complete plan. See [responsive subset](docs/srcset.md).
+
+Embedded video, audio, posters, alternate media sources and caption tracks use
+the same profile and preserved-source workflow:
+
+```text
+moon run cmd/main --target wasm -- plan examples/media/tree examples/media/moves.json media-plan.json --static-html
+moon run cmd/main --target wasm -- review media-plan.json
+moon run cmd/main --target wasm -- replay examples/media/tree media-plan.json relocated-media
+moon run cmd/main --target wasm -- restore relocated-media media-plan.json restored-media
+```
+
+This example uses [pinned MDN CC0 WebM/MP3 samples](examples/media/SOURCE.md)
+with authored poster/captions. Every local media reference is relocated and all
+resource bytes survive exact restoration. Unsupported attributes/ambiguous source
+forms refuse. See [media boundary and offline verification](docs/media.md).
 
 ## Review before replay
 
@@ -210,6 +225,8 @@ moon run scripts/check-e2e.mbtx -- wasm
 moon run scripts/check-e2e.mbtx -- native
 moon run scripts/chain-e2e.mbtx -- wasm
 moon run scripts/chain-e2e.mbtx -- native
+moon run scripts/media-e2e.mbtx -- wasm
+moon run scripts/media-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

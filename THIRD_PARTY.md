@@ -13,6 +13,7 @@ format semantics follow CommonMark and URI percent encoding.
 | Microsoft Markdown language service | pinned fixture [source](examples/vscode/SOURCE.md) | MIT, retained [license](examples/vscode/LICENSE) | Unmodified README and linked example as real input data |
 | sharkdp/bat | pinned fixture [source](examples/bat/SOURCE.md) | MIT option, retained [license](examples/bat/LICENSE-MIT) | Verbatim README header excerpt and unmodified SVG asset |
 | Svelte | pinned fixture [source](examples/svelte/SOURCE.md) | MIT, retained [license](examples/svelte/LICENSE.md) | Verbatim README header and unmodified dark/light PNGs |
+| MDN interactive-examples | pinned fixture [source](examples/media/SOURCE.md) | CC0-1.0, retained [license](examples/media/LICENSE-CC0) | Unmodified flower WebM and roar MP3; markup/poster/captions are authored separately |
 | WHATWG HTML Standard | [srcset](https://html.spec.whatwg.org/multipage/images.html#srcset-attributes) and [sizes requirements](https://html.spec.whatwg.org/multipage/images.html#sizes-attributes), checked 2026-10-16 | [CC BY 4.0; source-code portions BSD-3-Clause](https://github.com/whatwg/html/blob/main/LICENSE), copyright WHATWG | Semantic reference for the documented subset; no spec prose, implementation or tests copied |
 
 Runtime exit bridging uses the C `exit` function on native and async's
@@ -20,3 +21,8 @@ Runtime exit bridging uses the C `exit` function on native and async's
 The included Apache license originates from the `moon new` module scaffold.
 Upstream licenses/notices stay in downloaded dependencies; this repository
 does not redistribute those dependency implementations.
+
+The [WHATWG media](https://html.spec.whatwg.org/multipage/media.html) and
+[source element](https://html.spec.whatwg.org/multipage/embedded-content.html#the-source-element)
+requirements are additional semantic references (same WHATWG license above,
+checked 2026-10-16); no prose, implementation or tests were copied.

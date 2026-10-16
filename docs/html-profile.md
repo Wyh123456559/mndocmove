@@ -15,19 +15,23 @@ renderer, sanitizer, MDX processor or general `.html` file rewriter.
 Supported tags (ASCII case insensitive): `a`, `img`, `p`, `div`, `span`,
 `details`, `summary`, `br`, `hr`, `figure`, `figcaption`, `table`, `thead`,
 `tbody`, `tr`, `td`, `th`, `ul`, `ol`, `li`, `h1`–`h6`, `strong`, `em`,
-`b`, `i`, `code`, `pre`, `blockquote`, `sup`, `sub`, `kbd`, `samp`, `picture`, `source`.
+`b`, `i`, `code`, `pre`, `blockquote`, `sup`, `sub`, `kbd`, `samp`, `picture`, `source`,
+`video`, `audio`, `track`.
 
 URL-bearing attributes are `a[href]`, `img[src]` and individual candidates in
 `img[srcset]` / `source[srcset]`. Width sets can retain supported static `sizes`.
 See the [strict srcset and sizes subset](srcset.md).
+Embedded media adds `video[src,poster]`, `audio[src]`, media `source[src]` and
+`track[src]`, with [documented media metadata and refusals](media.md).
 Preserved
 attributes are `id`, `class`, `title`, `alt`, `width`, `height`, `align`,
 `role`, `target`, `rel`, `loading`, `decoding`, `border`, `colspan`, `rowspan`,
-`open`, and `aria-*`. Every value must be quoted; only `details open` may
-omit a value. Duplicate attributes are refused ignoring ASCII case.
+`open`, and `aria-*`. Every value must be quoted; only `details open` and the
+documented media boolean attributes may omit a value. Duplicate attributes are
+refused ignoring ASCII case.
 `source[media]` and `source[type]` are preserved selection metadata.
 Other attributes fail rather than hiding a possible URL grammar, including
-`data-src`, `style`, event handlers, SVG `xlink:href` and audio/video sources.
+`data-src`, `style`, event handlers and SVG `xlink:href`.
 
 URL entities must be recognized and semicolon terminated; use `&amp;` for
 query ampersands. Unknown/legacy unterminated references, replacement/invalid

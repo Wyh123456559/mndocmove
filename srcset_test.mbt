@@ -250,7 +250,7 @@ test "responsive malformed candidate grammars return positioned diagnostics and 
   }
   for
     source in [
-      "<source srcset='assets/a.png' SRCSET='assets/b.png'>", "<source src='assets/a.png'>",
+      "<source srcset='assets/a.png' SRCSET='assets/b.png'>", "<source src='assets/a.png' srcset='assets/b.png'>",
       "<img srcset='assets/a.png 1x' sizes='100vw'>", "<source srcset='assets/a.png 1x' sizes='100vw'>",
       "<source srcset=assets/a.png>", "<a srcset='assets/a.png 1x'>Image</a>",
     ] {

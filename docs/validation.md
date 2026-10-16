@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 90/90 tests; full migration/restoration, snapshot checks and chain E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 83/83 tests |
-| Windows x86-64, JS / Node | strict check passed | 83/83 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 90/90 tests |
+| Windows x86-64, Wasm host | strict check passed | 97/97 tests; all four E2E scripts passed |
+| Windows x86-64, Wasm-GC | strict check passed | 90/90 tests |
+| Windows x86-64, JS / Node | strict check passed | 90/90 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 97/97 tests; real-media CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -55,6 +55,9 @@ legacy/new CLI workflows:
 The ordered-chain head `2db6b8d` passed all three systems and all three E2E
 scripts on both CLI targets:
 [GitHub Actions run 38849187092](https://github.com/Wyh123456559/mndocmove/actions/runs/38849187092).
+The width-responsive head `c6a1e11` passed all three systems, all four library
+targets and the complete Wasm/native E2E matrix:
+[GitHub Actions run 38851796463](https://github.com/Wyh123456559/mndocmove/actions/runs/38851796463).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -133,8 +136,9 @@ UTF-16 lengths, including Unicode paths, profiles and empty arrays, at the exact
 accepted/refused boundary without allocating a 200-million-unit test artifact.
 The offline chain E2E performs three ordered stages on the real Microsoft
 fixture, endpoint checks and exact restore, while refusing stale source and
-existing/inside-source output plan paths. Current CI runs all three E2E scripts
-on Wasm/native in addition to the four library targets on every OS.
+existing/inside-source output plan paths. CI runs the full migration, check,
+chain and media E2E scripts on Wasm/native alongside the four library targets
+on every OS.
 
 Width-based responsive relocation adds five black-box cases and a tested README
 example. Coverage includes exact width equality with leading zeros, mixed/implicit
@@ -145,6 +149,17 @@ review/check/restore and reuse after refusal. The existing Svelte E2E now also
 migrates the authored width page with the real unmodified 2500px PNGs and checks
 exact source/metadata preservation and restored bytes. Public signatures and
 the existing plan wire representation are unchanged (`moon info` verified).
+
+Embedded media adds six black-box cases and a tested README example. Tests
+cover direct/alternate video and audio sources, posters, tracks and fallback
+links, shared URL/entity/percent rules, source spans and BOM/CRLF/emoji,
+supported boolean/enumerated metadata, duplicate/dynamic/ambiguous/empty inputs,
+missing/escaping resources, code/comment preservation, deterministic saved plans,
+chain composition and recovery after a later binary edit. The new independent
+media E2E uses pinned CC0 WebM/MP3 plus authored SVG/WebVTT and checks all six
+rewritten references, full result inventory, exact exported/restored resource
+bytes, profile opt-in and refusal to overwrite later video edits. No codec or
+browser playback claim follows from these path/byte checks.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.
