@@ -174,20 +174,45 @@ async fn export_tree(
 }
 
 ///|
+async fn extend_saved(
+  root : String,
+  saved : String,
+  moves : String,
+  output : String,
+  profile : @lib.Profile?,
+) -> Unit {
+  let chain = @lib.MoveChain::from_json_string(read_text(saved))
+  ignore(chain.replay(read_tree(root)))
+  let next = chain.then_moves(@lib.moves_from_json(read_text(moves)), profile?)
+  @fs.write_file(
+    outside_path(root, output),
+    next.to_json_string(),
+    create_mode=CreateNew,
+  )
+  println("Saved chain with " + next.stages().length().to_string() + " stages")
+}
+
+///|
 /// Plans, reviews, replays or restores a migration. All filesystem outputs
 /// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["extend", root, saved, moves, output] =>
+        extend_saved(root, saved, moves, output, None)
+      ["extend", root, saved, moves, output, "--static-html"] =>
+        extend_saved(root, saved, moves, output, Some(StaticHtml))
+      ["extend", root, saved, moves, output, "--commonmark"] =>
+        extend_saved(root, saved, moves, output, Some(CommonMark))
       ["check", root, plan_file] => {
-        let report = @lib.MovePlan::from_json_string(read_text(plan_file)).check(
+        let report = @lib.MoveChain::from_json_string(read_text(plan_file)).check(
           read_tree(root),
         )
         println(report.to_json_string())
         return if report.is_match() { 0 } else { 1 }
       }
       ["check", root, plan_file, "--result"] => {
-        let report = @lib.MovePlan::from_json_string(read_text(plan_file)).check(
+        let report = @lib.MoveChain::from_json_string(read_text(plan_file)).check(
           read_tree(root),
           side=Result,
         )
@@ -195,7 +220,7 @@ pub async fn run(args : Array[String]) -> Int32 {
         return if report.is_match() { 0 } else { 1 }
       }
       ["review", plan_file] =>
-        println(@lib.MovePlan::from_json_string(read_text(plan_file)).review())
+        println(@lib.MoveChain::from_json_string(read_text(plan_file)).review())
       ["review", plan_file, context_text] => {
         let mut context = -1
         for i in 0..<=20 {
@@ -208,7 +233,9 @@ pub async fn run(args : Array[String]) -> Int32 {
           stop("InvalidContext: use an integer from 0 to 20")
         }
         println(
-          @lib.MovePlan::from_json_string(read_text(plan_file)).review(context~),
+          @lib.MoveChain::from_json_string(read_text(plan_file)).review(
+            context~,
+          ),
         )
       }
       ["plan", root, moves, output, "--static-html"] => {
@@ -236,18 +263,18 @@ pub async fn run(args : Array[String]) -> Int32 {
         println(plan.preview())
       }
       ["replay", root, plan_file, output] => {
-        let plan = @lib.MovePlan::from_json_string(read_text(plan_file))
+        let plan = @lib.MoveChain::from_json_string(read_text(plan_file))
         let tree = plan.replay(read_tree(root))
         export_tree(root, output, tree)
       }
       ["restore", root, plan_file, output] => {
-        let plan = @lib.MovePlan::from_json_string(read_text(plan_file))
+        let plan = @lib.MoveChain::from_json_string(read_text(plan_file))
         let tree = plan.restore(read_tree(root))
         export_tree(root, output, tree)
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

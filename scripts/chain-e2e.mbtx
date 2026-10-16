@@ -1,0 +1,59 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+async fn capture(args : Array[String], expected : Int) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected { println(out.text()); println(err.text()); abort("Unexpected exit code") }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else { fail("Use wasm or native") }
+  let tmp = @fs.tmpdir(prefix="mndocmove-chain-")
+  let prefix = ["run", "cmd/main", "--target", target, "--target-dir", tmp + "/build", "--deny-warn", "--"]
+  let source = "examples/vscode/tree"
+  let original = @fs.read_file(source + "/README.md").text()
+  let asset = @fs.read_file(source + "/example.mjs").binary()
+  let first = tmp + "/first.json"
+  let second_moves = tmp + "/second-moves.json"
+  let third_moves = tmp + "/third-moves.json"
+  let second = tmp + "/second.json"
+  let third = tmp + "/third.json"
+  @fs.write_file(second_moves, "[[\"manual\",\"guides\"],[\"samples\",\"assets\"]]")
+  @fs.write_file(third_moves, "[[\"guides/README.md\",\"README.md\"]]")
+  ignore(capture(prefix + ["plan", source, "examples/vscode/moves.json", first], 0))
+  ignore(capture(prefix + ["extend", source, first, second_moves, second], 0))
+  ignore(capture(prefix + ["extend", source, second, third_moves, third], 0))
+  let saved = @fs.read_file(third).binary()
+  ignore(capture(prefix + ["extend", source, second, third_moves, third], 1))
+  assert_eq(@fs.read_file(third).binary(), saved)
+  ignore(capture(prefix + ["extend", source, first, second_moves, source + "/forbidden-chain.json"], 1))
+  assert_true(!@fs.exists(source + "/forbidden-chain.json"))
+  let review = capture(prefix + ["review", third, "1"], 0)
+  assert_true(review.contains("=== Stage 1 of 3 ==="))
+  assert_true(review.contains("=== Stage 2 of 3 ==="))
+  assert_true(review.contains("=== Stage 3 of 3 ==="))
+  assert_true(review.contains("[example.mjs](assets/example.mjs)"))
+  ignore(capture(prefix + ["check", source, third], 0))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", source, third, output], 0))
+  assert_eq(@fs.read_file(output + "/README.md").text(), original.replace(old="[example.mjs](./example.mjs)", new="[example.mjs](assets/example.mjs)"))
+  assert_eq(@fs.read_file(output + "/assets/example.mjs").binary(), asset)
+  ignore(capture(prefix + ["check", output, third, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, third, restored], 0))
+  assert_eq(@fs.read_file(restored + "/README.md").text(), original)
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  @fs.write_file(restored + "/README.md", "later edit", create_mode=TruncateExisting)
+  let stale = capture(prefix + ["extend", restored, first, second_moves, tmp + "/stale-chain.json"], 1)
+  assert_true(stale.contains("StaleSnapshot"))
+  assert_true(!@fs.exists(tmp + "/stale-chain.json"))
+  assert_eq(@fs.read_file(source + "/README.md").text(), original)
+  assert_eq(@fs.read_file(source + "/example.mjs").binary(), asset)
+  println("Move chain E2E passed: " + target + "; three stages from real README, no intermediate exports, source/final checks, exact restore, exclusive plan output and stale source refusal. Files retained: " + tmp)
+}

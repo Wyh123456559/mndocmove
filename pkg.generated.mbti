@@ -64,6 +64,17 @@ pub fn Move::not_equal(Self, Self) -> Bool
 pub fn Move::source(Self) -> String
 pub fn Move::to_repr(Self) -> @debug.Repr
 
+type MoveChain derive(@debug.Debug)
+pub fn MoveChain::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport
+pub fn MoveChain::from_json_string(String) -> Self raise MoveError
+pub fn MoveChain::replay(Self, DocTree) -> DocTree raise MoveError
+pub fn MoveChain::restore(Self, DocTree) -> DocTree raise MoveError
+pub fn MoveChain::review(Self, context? : Int) -> String raise MoveError
+pub fn MoveChain::stages(Self) -> Array[MovePlan]
+pub fn MoveChain::then_moves(Self, Array[Move], profile? : Profile) -> Self raise MoveError
+pub fn MoveChain::to_json_string(Self) -> String raise MoveError
+pub fn MoveChain::to_repr(Self) -> @debug.Repr
+
 type MovePlan derive(@debug.Debug)
 pub fn MovePlan::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport
 pub fn MovePlan::edits(Self) -> Array[Edit]
@@ -74,6 +85,7 @@ pub fn MovePlan::profile(Self) -> Profile
 pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::restore(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::review(Self, context? : Int) -> String raise MoveError
+pub fn MovePlan::then_moves(Self, Array[Move], profile? : Profile) -> MoveChain raise MoveError
 pub fn MovePlan::to_json_string(Self) -> String
 pub fn MovePlan::to_repr(Self) -> @debug.Repr
 

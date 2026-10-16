@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 74/74 tests; real-fixture migration/restoration and snapshot-check E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 67/67 tests |
-| Windows x86-64, JS / Node | strict check passed | 67/67 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 74/74 tests; real-fixture snapshot-check CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 84/84 tests; full migration/restoration, snapshot checks and chain E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 77/77 tests |
+| Windows x86-64, JS / Node | strict check passed | 77/77 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 84/84 tests; real-fixture snapshot-check and three-stage chain CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -49,6 +49,9 @@ The inventory-root head `2ad0b08` also passed all three systems:
 [GitHub Actions run 38834525464](https://github.com/Wyh123456559/mndocmove/actions/runs/38834525464).
 The responsive-image head `bc0fba7` passed all three systems:
 [GitHub Actions run 38835714944](https://github.com/Wyh123456559/mndocmove/actions/runs/38835714944).
+The complete snapshot-report head `d29f332` passed all three systems and both
+legacy/new CLI workflows:
+[GitHub Actions run 38848072096](https://github.com/Wyh123456559/mndocmove/actions/runs/38848072096).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -115,6 +118,20 @@ and all 8192 differences between two maximal file inventories. The independent
 all drift categories, read-only input, exit codes and report/plan separation.
 CI executes this script and the full migration/restoration script on both CLI
 targets; local native snapshot-check execution is recorded above.
+
+Ordered chains add eight black-box tests, one wire-budget white-box test and a
+tested README example. Coverage includes equivalence with sequential plans,
+intermediate-vs-endpoint guards, cancellation with retained stage evidence,
+profile inheritance/overrides, deterministic single-snapshot wire exchange,
+malformed/extra/unknown data, array isolation and recovery after an append
+refusal. Limits accept eight stages and exactly 128 MiB logical snapshot bytes,
+and reject the next stage. Wire preflight is checked against actual encoded
+UTF-16 lengths, including Unicode paths, profiles and empty arrays, at the exact
+accepted/refused boundary without allocating a 200-million-unit test artifact.
+The offline chain E2E performs three ordered stages on the real Microsoft
+fixture, endpoint checks and exact restore, while refusing stale source and
+existing/inside-source output plan paths. Current CI runs all three E2E scripts
+on Wasm/native in addition to the four library targets on every OS.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

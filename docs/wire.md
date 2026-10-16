@@ -27,3 +27,8 @@ Preview: `["mndocmove-preview",1,moves,edits]`.
 Each edit is `[path,start,end,before,after,old_target,new_target]`.
 Offsets count UTF-16 code units; `end` is exclusive. These offsets refer to the
 original source, including CRLF/BOM. Preview is informational, not a replay plan.
+
+Ordered chains use the separate `mndocmove-chain` version-1 envelope documented
+in [ordered migrations](chains.md). CLI inspection/execution accepts both forms;
+the single-plan loader remains strict. Snapshot-check JSON is report-only and
+is not accepted as either plan form.

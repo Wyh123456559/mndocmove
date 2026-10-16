@@ -48,3 +48,7 @@ The offline E2E uses the real Microsoft fixture, verifies a completed export,
 then reports modified/missing/extra files from a temporary copy in one result.
 It checks JSON values, exit codes, source-byte preservation and report/plan
 separation. Both Wasm and native runs execute in the three-system CI matrix.
+
+`MoveChain::check` and the same CLI command also accept ordered saved chains.
+Source/result selects the original/final endpoint; use `stages()` to inspect an
+intermediate plan. See [ordered migrations](chains.md).

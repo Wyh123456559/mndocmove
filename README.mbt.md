@@ -150,3 +150,26 @@ test "report every snapshot change without applying a migration" {
   assert_true(plan.check(plan.replay(tree), side=Result).is_match())
 }
 ```
+
+Plan the next stage against the preceding result without exporting it:
+
+```mbt check
+///|
+test "chain a document move and a later resource move" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](a.bin)\r\n"),
+    @mndocmove.Entry::new("a.bin", b"\xFF"),
+  ])
+  let first = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("r.md", "manual/r.md"),
+  ])
+  let chain = first.then_moves([@mndocmove.Move::new("a.bin", "images/a.bin")])
+  let saved = @mndocmove.MoveChain::from_json_string(chain.to_json_string())
+  let output = saved.replay(tree)
+  assert_eq(
+    output.get("manual/r.md").unwrap().text(),
+    "[asset](../images/a.bin)\r\n",
+  )
+  assert_eq(saved.restore(output).entries(), tree.entries())
+}
+```

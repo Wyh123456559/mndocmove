@@ -110,7 +110,7 @@ fn decode_moves(value : Json) -> Array[Move] raise MoveError {
 ///|
 /// Serializes the complete original bytes and moves, never trusted edit offsets.
 /// Array order and uppercase hex make output deterministic on all backends.
-pub fn MovePlan::to_json_string(self : MovePlan) -> String {
+fn MovePlan::wire_json(self : MovePlan) -> Json {
   let files : Array[Json] = self.original.files.map(fn(e) {
     [Json(e.path), Json(hex_bytes(e.data))]
   })
@@ -129,14 +129,37 @@ pub fn MovePlan::to_json_string(self : MovePlan) -> String {
     Json::array(files),
     Json::array(moves),
   ]
-  value.stringify()
+  value
+}
+
+///|
+/// Serializes the complete original bytes and moves, never trusted edit offsets.
+pub fn MovePlan::to_json_string(self : MovePlan) -> String {
+  self.wire_json().stringify()
 }
 
 ///|
 /// Parses a bounded versioned plan and recomputes every edit from original bytes.
 /// Unknown versions/profiles, extra elements and malformed bytes are refused.
 pub fn MovePlan::from_json_string(text : String) -> MovePlan raise MoveError {
-  match parse_wire(text) {
+  decode_plan(parse_wire(text))
+}
+
+///|
+fn wire_profile(name : String) -> Profile raise MoveError {
+  match name {
+    "commonmark" => CommonMark
+    "static-html" => StaticHtml
+    _ => {
+      refuse("InvalidPlan", "", "Unknown syntax profile")
+      abort("unreachable")
+    }
+  }
+}
+
+///|
+fn decode_plan(value : Json) -> MovePlan raise MoveError {
+  match value {
     [
       String("mndocmove"),
       Number(1, ..),
@@ -144,14 +167,7 @@ pub fn MovePlan::from_json_string(text : String) -> MovePlan raise MoveError {
       Array(files),
       moves,
     ] => {
-      let profile = match profile_name {
-        "commonmark" => CommonMark
-        "static-html" => StaticHtml
-        _ => {
-          refuse("InvalidPlan", "", "Unknown syntax profile")
-          abort("unreachable")
-        }
-      }
+      let profile = wire_profile(profile_name)
       if files.length() > 4096 {
         refuse("FileLimit", "", "Use at most 4096 files")
       }

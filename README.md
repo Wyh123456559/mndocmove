@@ -73,6 +73,9 @@ This repository has not yet been published to Mooncakes.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
   plan round trip; loading recomputes edits instead of trusting stored offsets.
 - `moves_from_json`: strict move-pair input. See [wire format](docs/wire.md).
+- `MovePlan::then_moves` / `MoveChain::then_moves`: ordered migration stages
+  without intermediate exports; chains support review/check/replay/restore and
+  bounded, deterministic saved plans. See [ordered workflows](docs/chains.md).
 
 ## Current supported boundary
 
@@ -137,6 +140,19 @@ The report is **for review**, not a runnable patch: its asset manifest is not
 binary patch data. Use `replay` to perform the complete migration and enforce
 the snapshot guard. See [report format and checks](docs/review.md).
 
+## Continue a migration in stages
+
+```text
+moon run cmd/main --target wasm -- extend examples/vscode/tree plan.json examples/vscode/second-moves.json chain.json
+moon run cmd/main --target wasm -- review chain.json
+moon run cmd/main --target wasm -- replay examples/vscode/tree chain.json relocated-chain
+```
+
+The next moves name paths in the preceding result. All stages retain their
+evidence; only the final tree is exported. The original snapshot is still
+required to match. Syntax profiles inherit unless explicitly overridden.
+See [chain limits, wire format and full restore example](docs/chains.md).
+
 ## Check saved snapshots
 
 ```text
@@ -190,6 +206,8 @@ moon run scripts/e2e.mbtx -- wasm
 moon run scripts/e2e.mbtx -- native
 moon run scripts/check-e2e.mbtx -- wasm
 moon run scripts/check-e2e.mbtx -- native
+moon run scripts/chain-e2e.mbtx -- wasm
+moon run scripts/chain-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

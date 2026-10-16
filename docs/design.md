@@ -55,6 +55,10 @@ licensed Svelte README/PNG migration/restore workflow.
 
 Implemented eighth capability: complete source/result snapshot drift reports,
 with typed changes, deterministic JSON and a read-only CLI/CI verification flow.
+
+Implemented ninth capability: ordered migration chains against intermediate
+snapshots, with per-stage evidence, compact saved stages, bounded resources and
+one verified final export/exact restoration workflow.
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
