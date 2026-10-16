@@ -82,3 +82,23 @@ test "restore from a saved plan without reverse URL rewriting" {
   assert_eq(original.get("r.md").unwrap().text(), source)
 }
 ```
+
+Root-directory navigation follows a guide into a deeper folder:
+
+```mbt check
+///|
+test "keep a navigation link attached to the inventory root" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("guide/NAV.md", "[Root](../?view=tree#docs)\r\n"),
+  ])
+  let plan = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("guide", "manual/deep"),
+  ])
+  let output = plan.replay(tree)
+  assert_eq(
+    output.get("manual/deep/NAV.md").unwrap().text(),
+    "[Root](../../?view=tree#docs)\r\n",
+  )
+  assert_eq(plan.restore(output).entries(), tree.entries())
+}
+```

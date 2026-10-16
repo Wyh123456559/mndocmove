@@ -151,6 +151,8 @@ pub fn Move::destination(self : Move) -> String {
 
 ///|
 /// A replacement in the original Markdown, with an exclusive UTF-16 end.
+/// An empty old_target/new_target denotes the inventory root directory;
+/// File/move operands remain nonempty at validated inventory/plan boundaries.
 pub(all) struct Edit {
   path : String
   start : Int32

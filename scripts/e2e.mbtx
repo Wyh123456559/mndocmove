@@ -127,6 +127,29 @@ async fn main {
   assert_eq(@fs.read_file(html_restored + "/doc/logo-header.svg").binary(), logo)
   assert_eq(@fs.read_file(output + "/manual/README.md").text(), expected)
   assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), original_asset)
+  // An authored navigation page surrounds the unmodified Microsoft fixture.
+  // Its ../ link names the inventory root, even after the whole guide moves.
+  let navigation_root = tmp + "/navigation-source"
+  @fs.mkdir(navigation_root + "/guide", recursive=true)
+  @fs.write_file(navigation_root + "/guide/README.md", @fs.read_file("examples/vscode/tree/README.md"))
+  @fs.write_file(navigation_root + "/guide/example.mjs", original_asset)
+  let navigation = "# Navigation\r\n[Documentation root](../?view=tree#docs)\r\n[Guide](README.md)\r\n"
+  @fs.write_file(navigation_root + "/guide/NAV.md", navigation)
+  let navigation_moves = tmp + "/navigation-moves.json"
+  let navigation_plan = tmp + "/navigation-plan.json"
+  let navigation_output = tmp + "/navigation-export"
+  @fs.write_file(navigation_moves, "[[\"guide\",\"manual/deep\"]]")
+  invoke(prefix + ["plan", navigation_root, navigation_moves, navigation_plan], 0)
+  let navigation_review = capture(prefix + ["review", navigation_plan], 0)
+  assert_true(navigation_review.contains("+[Documentation root](../../?view=tree#docs)"))
+  invoke(prefix + ["replay", navigation_root, navigation_plan, navigation_output], 0)
+  assert_eq(@fs.read_file(navigation_output + "/manual/deep/NAV.md").text(), navigation.replace(old="../?", new="../../?"))
+  assert_eq(@fs.read_file(navigation_output + "/manual/deep/README.md").binary(), @fs.read_file("examples/vscode/tree/README.md").binary())
+  assert_eq(@fs.read_file(navigation_output + "/manual/deep/example.mjs").binary(), original_asset)
+  invoke(prefix + ["restore", navigation_output, navigation_plan, tmp + "/navigation-restored"], 0)
+  assert_eq(@fs.read_file(tmp + "/navigation-restored/guide/NAV.md").text(), navigation)
+  assert_eq(@fs.read_file(navigation_root + "/guide/NAV.md").text(), navigation)
+  println("Root navigation E2E passed: directory move, saved-plan review/replay/restore, root query/fragment, original fixture bytes and CRLF.")
   println("Restore E2E passed: original paths and bytes, both syntax profiles, stale result refusal, later edits preserved, retry and exclusive output.")
   println("Staged export E2E passed: actual write failure, unpublished final path, retained diagnostics, successful retry and exact asset bytes.")
   println("Static HTML E2E passed: bat header, profile opt-in, saved-plan replay, exact source edit and logo bytes.")

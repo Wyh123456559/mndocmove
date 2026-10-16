@@ -85,7 +85,8 @@ Raw HTML requires the static HTML profile; wiki links and template markers
 are refused when planning a nonempty move list. MDX, site routing, extensionless-to-Markdown inference,
 heading renames, root-relative URLs, encoded separators/NUL, paths escaping
 the root, symlinks, special files and unknown wire semantics are unsupported.
-Links naming the inventory root directory itself are currently refused.
+Links to the inventory root through `.` / `..` are supported and stay attached
+to that root when documents move. See [root navigation](docs/root-links.md).
 Non-Markdown files are opaque assets: references inside JavaScript, HTML,
 CSS or configuration are outside this API's scope. The tool cannot prove
 that arbitrary text has no application-specific path references.

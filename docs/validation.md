@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 51/51 tests; real README + bat HTML migration/restoration CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 44/44 tests |
-| Windows x86-64, JS / Node | strict check passed | 44/44 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 51/51 tests; native CLI real README + bat HTML migration/restoration E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 57/57 tests; real README + bat HTML + root navigation CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 50/50 tests |
+| Windows x86-64, JS / Node | strict check passed | 50/50 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 57/57 tests; native CLI real README + bat HTML + root navigation E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -42,6 +42,9 @@ later report lines on Windows native (Linux/macOS passed). The script now uses
 The same audit corrected all-separator path normalization and added a real
 multi-level/backslash path regression. Current changes must pass their own
 head-specific CI run; earlier failures are not reported as successful runs.
+The restored-snapshot head `43b5f19` subsequently passed all three systems,
+including Windows native E2E:
+[GitHub Actions run 38832637668](https://github.com/Wyh123456559/mndocmove/actions/runs/38832637668).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -82,6 +85,13 @@ Both real CLI fixtures now perform migration-to-restoration round trips; a
 later Markdown edit is refused and preserved, followed by a successful retry.
 Nested output paths inside the source are refused in slash and backslash
 forms; a backslash-form outside path completes a verified export.
+
+Root navigation adds five black-box cases plus a tested README example. The
+cases exercise inward/outward document moves, prefix swaps, root query/fragment
+suffixes, reference definitions/static HTML, original URL spelling, save/load
+and restore, while retaining escape and invalid-root-move refusals. The real
+fixture E2E additionally moves an authored root navigation page together with
+the unmodified Microsoft README and example.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

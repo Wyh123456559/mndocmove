@@ -50,7 +50,9 @@ fn validate_path(path : String) -> Unit raise MoveError {
 
 ///|
 fn under(path : String, prefix : String) -> Bool {
-  path == prefix || path.has_prefix(prefix + "/")
+  // The empty canonical link target denotes the inventory root. File names
+  // and move prefixes still pass validate_path and may never be empty.
+  prefix.is_empty() || path == prefix || path.has_prefix(prefix + "/")
 }
 
 ///|
@@ -85,7 +87,9 @@ fn resolve_path(source : String, relative : String) -> String raise MoveError {
     }
   }
   let result = parts.join("/")
-  validate_path(result)
+  if !result.is_empty() {
+    validate_path(result)
+  }
   result
 }
 
@@ -93,7 +97,11 @@ fn resolve_path(source : String, relative : String) -> String raise MoveError {
 fn relative_path(source : String, target : String) -> String {
   let from = source.split("/").map(fn(s) { s.to_owned() }).to_array()
   ignore(from.pop())
-  let to = target.split("/").map(fn(s) { s.to_owned() }).to_array()
+  let to = if target.is_empty() {
+    []
+  } else {
+    target.split("/").map(fn(s) { s.to_owned() }).to_array()
+  }
   let mut common = 0
   while common < from.length() &&
         common < to.length() &&
