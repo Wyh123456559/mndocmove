@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 36/36 tests; real README + bat HTML CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 42/42 tests; real README + bat HTML CLI E2E passed |
 | Windows x86-64, Wasm-GC | strict check passed | 36/36 tests |
 | Windows x86-64, JS / Node | strict check passed | 36/36 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 36/36 tests; native CLI real README + bat HTML E2E passed |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 42/42 tests; native CLI real README + bat HTML E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -33,8 +33,11 @@ targets, both CLI targets, formatting and interface drift. A configured workflow
 is not a CI pass. The first actual remote run, for `a90c538`, passed on all
 three OS runners, including native runtime and both CLI E2E targets:
 [GitHub Actions run 38775375097](https://github.com/Wyh123456559/mndocmove/actions/runs/38775375097).
-That run tested 27 cases per target before contextual review was added; current
-changes must pass their own head-specific run after pushing.
+That run tested 27 cases per target before contextual review was added. The
+subsequent `ed144df` run passed Linux/macOS but failed a Windows native E2E
+assertion: MSVC text-mode stdout adds CRLF to captured review output. The
+script now normalizes only that stdout transport layer; all file assertions
+remain byte-exact. Current changes must pass their own head-specific CI run.
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -58,6 +61,13 @@ repeated lines, multiple context sizes and missing-final-newline states. Other
 cases cover CRLF/emoji, coalescing, rename/asset manifests, invalid contexts,
 terminal controls, deterministic wire reload and plan/source immutability.
 Both real CLI workflows also inspect saved plans through `review`.
+
+Verified export adds six real filesystem tests: unique staging reservation,
+changed bytes, missing/extra files, empty-directory refusal and recovery,
+no-replace publication over an existing empty directory/file, and exact final
+inventory with reserved-looking user filenames. The E2E workflow forces an
+actual overlong-component write failure and checks unpublished final output,
+retained diagnostic files, successful retry and unchanged source/asset bytes.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

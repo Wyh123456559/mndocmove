@@ -35,10 +35,12 @@ that root. Plans contain full source bytes; treat them as source material.
 `plan` prints versioned preview JSON: moves and edits with path, UTF-16 start /
 exclusive end, before / after, old / new target. `replay` checks the entire
 inventory. Exit codes: 0 success, 1 diagnostic / I/O failure, 2 usage error.
-An existing plan file or export directory is refused. A failed disk export can
-leave a partial directory, normally marked `.mndocmove-incomplete`. Only a
-successful exit confirms completion; interruption before marker creation is
-also possible. Disk writes are not a filesystem transaction.
+An existing plan file or export directory is refused. Export writes into a
+reserved sibling staging directory, reads back the complete file inventory and
+bytes, then publishes it with a no-replace rename. A write or validation failure
+retains that staging directory and reports its path; it does not publish a
+partial final tree. See [export and recovery](docs/export.md). Publication is
+not a crash-durable transaction: no filesystem flush guarantee is provided.
 Do not edit the source or destination concurrently with inventory/export.
 
 For native execution, replace `--target wasm` with `--target native`.
@@ -145,6 +147,8 @@ moon run scripts/e2e.mbtx -- native
 
 The E2E script uses a fresh temporary directory and asserts the exact README
 change, byte preservation, stale-plan refusal, exclusive output and exit codes.
+It also forces a real filesystem write failure, checks the retained staging
+diagnostics and retries successfully at the same unused output path.
 It retains temporary outputs for inspection. See [validation](docs/validation.md)
 for actual local evidence and CI limitations.
 

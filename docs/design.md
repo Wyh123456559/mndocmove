@@ -39,7 +39,12 @@ the content is interpreted as Markdown.
 Implemented third capability: contextual migration review derived from verified
 source edits, including all opaque-asset moves and an offline saved-plan CLI.
 
-Next capability: stage and verify exports before publishing a final directory.
+Implemented fourth capability: reserved sibling staging, exact inventory/byte
+readback and no-replace publication, with retained failure diagnostics and a
+real filesystem-failure/retry demonstration.
+
+Next capability: exact restoration from a saved plan, guarded against changes
+to the migrated tree.
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

@@ -2,6 +2,11 @@ import {
   "Wyh123456559/mndocmove" @lib,
   "moonbitlang/async/fs",
   "moonbitlang/core/debug",
+  "moonbitlang/core/env",
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"
 
 supported_targets = "+wasm+native"

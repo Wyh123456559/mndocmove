@@ -4,6 +4,11 @@ priv suberror CliError {
 }
 
 ///|
+priv suberror ExportFailure {
+  ExportFailure(String, String)
+}
+
+///|
 fn stop(message : String) -> Unit raise {
   raise CliError(message)
 }
@@ -106,8 +111,8 @@ async fn outside_path(root : String, output : String) -> String {
 }
 
 ///|
-// The output is a new directory export. The source is never written.
-// On I/O failure the reserved output directory is retained with its marker.
+// The original directory is read-only. The final path is published only after
+// byte-for-byte readback of a separately reserved sibling staging directory.
 async fn export_tree(
   root : String,
   output : String,
@@ -117,42 +122,52 @@ async fn export_tree(
   if @fs.exists(target) {
     stop("OutputExists: choose an unused output directory")
   }
-  if tree
-    .entries()
-    .any(fn(e) {
-      e.path() == ".mndocmove-incomplete" ||
-      e.path().has_prefix(".mndocmove-incomplete/")
-    }) {
-    stop("ReservedPath: .mndocmove-incomplete is reserved by the exporter")
-  }
-  @fs.mkdir(target)
-  let marker = target + "/.mndocmove-incomplete"
-  @fs.write_file(
-    marker,
-    "Export incomplete. Source files have not been modified.\n",
-    create_mode=CreateNew,
-  )
-  for entry in tree.entries() {
-    let components = entry
-      .path()
-      .split("/")
-      .map(fn(s) { s.to_owned() })
-      .to_array()
-    ignore(components.pop())
-    if !components.is_empty() {
-      @fs.mkdir(
-        target + "/" + components.join("/"),
-        recursive=true,
-        allow_exist=true,
-      )
-    }
+  let stage = reserve_stage(target)
+  let marker = stage + "/.mndocmove-incomplete"
+  let payload = stage + "/tree"
+  try {
     @fs.write_file(
-      target + "/" + entry.path(),
-      entry.data(),
+      marker,
+      "Staging export. Source unchanged; final path is not yet published.\n",
       create_mode=CreateNew,
     )
+    @fs.mkdir(payload)
+    for entry in tree.entries() {
+      let components = entry
+        .path()
+        .split("/")
+        .map(fn(s) { s.to_owned() })
+        .to_array()
+      ignore(components.pop())
+      if !components.is_empty() {
+        @fs.mkdir(
+          payload + "/" + components.join("/"),
+          recursive=true,
+          allow_exist=true,
+        )
+      }
+      @fs.write_file(
+        payload + "/" + entry.path(),
+        entry.data(),
+        create_mode=CreateNew,
+      )
+    }
+    publish_staged(payload, target, tree)
+  } catch {
+    error => raise ExportFailure(stage, @debug.to_string(error))
   }
-  @fs.remove(marker)
+  // Publication already succeeded. Failure to remove our empty staging shell
+  // is a cleanup warning, never a false report that the migration failed.
+  try {
+    @fs.remove(marker)
+    @fs.rmdir(stage, recursive=false)
+  } catch {
+    _ =>
+      println(
+        "CleanupWarning: verified export published; staging metadata remains at " +
+        stage,
+      )
+  }
   println(
     "Exported " + tree.entries().length().to_string() + " files to " + target,
   )
@@ -226,6 +241,16 @@ pub async fn run(args : Array[String]) -> Int32 {
     }
     CliError(message) => {
       println(message)
+      1
+    }
+    ExportFailure(stage, reason) => {
+      println(
+        "ExportFailed: final output was not published; staging retained at " +
+        stage +
+        "\nCause: " +
+        reason +
+        "\nFix the cause and replay to an unused output path. Source files are unchanged.",
+      )
       1
     }
     error => {
