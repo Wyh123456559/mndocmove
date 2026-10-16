@@ -179,6 +179,21 @@ async fn export_tree(
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["check", root, plan_file] => {
+        let report = @lib.MovePlan::from_json_string(read_text(plan_file)).check(
+          read_tree(root),
+        )
+        println(report.to_json_string())
+        return if report.is_match() { 0 } else { 1 }
+      }
+      ["check", root, plan_file, "--result"] => {
+        let report = @lib.MovePlan::from_json_string(read_text(plan_file)).check(
+          read_tree(root),
+          side=Result,
+        )
+        println(report.to_json_string())
+        return if report.is_match() { 0 } else { 1 }
+      }
       ["review", plan_file] =>
         println(@lib.MovePlan::from_json_string(read_text(plan_file)).review())
       ["review", plan_file, context_text] => {
@@ -232,7 +247,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

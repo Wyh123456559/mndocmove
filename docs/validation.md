@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 67/67 tests; Microsoft/bat/Svelte + root navigation CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 60/60 tests |
-| Windows x86-64, JS / Node | strict check passed | 60/60 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 67/67 tests; native Microsoft/bat/Svelte + root navigation E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 74/74 tests; real-fixture migration/restoration and snapshot-check E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 67/67 tests |
+| Windows x86-64, JS / Node | strict check passed | 67/67 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 74/74 tests; real-fixture snapshot-check CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -47,6 +47,8 @@ including Windows native E2E:
 [GitHub Actions run 38832637668](https://github.com/Wyh123456559/mndocmove/actions/runs/38832637668).
 The inventory-root head `2ad0b08` also passed all three systems:
 [GitHub Actions run 38834525464](https://github.com/Wyh123456559/mndocmove/actions/runs/38834525464).
+The responsive-image head `bc0fba7` passed all three systems:
+[GitHub Actions run 38835714944](https://github.com/Wyh123456559/mndocmove/actions/runs/38835714944).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -104,6 +106,15 @@ duplicate densities, missing/escaping candidates and 256/257 candidate limits
 refuse the complete plan and leave later valid planning usable. The real Svelte
 README excerpt and both binary PNGs undergo saved-plan review/replay/restore;
 every original, exported and restored image byte is compared offline.
+
+Snapshot checks add six black-box tests and a tested README example. They cover
+source/result selection, complete sorted drift, equal-length byte changes,
+deterministic JSON/reloaded plans, copied report arrays, empty/zero-byte data,
+and all 8192 differences between two maximal file inventories. The independent
+`scripts/check-e2e.mbtx` uses the real Microsoft fixture and checks both sides,
+all drift categories, read-only input, exit codes and report/plan separation.
+CI executes this script and the full migration/restoration script on both CLI
+targets; local native snapshot-check execution is recorded above.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

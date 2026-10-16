@@ -34,3 +34,5 @@ jobs:
       - run: moon test --target native --deny-warn
       - run: moon run scripts/e2e.mbtx -- wasm
       - run: moon run scripts/e2e.mbtx -- native
+      - run: moon run scripts/check-e2e.mbtx -- wasm
+      - run: moon run scripts/check-e2e.mbtx -- native

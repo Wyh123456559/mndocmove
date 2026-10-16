@@ -129,3 +129,24 @@ test "preserve responsive density descriptors during relocation" {
   assert_eq(plan.edits().length(), 3)
 }
 ```
+
+Inspect all drift before replay or after export:
+
+```mbt check
+///|
+test "report every snapshot change without applying a migration" {
+  let tree = @mndocmove.DocTree::new([@mndocmove.Entry::new("a.bin", b"A")])
+  let plan = @mndocmove.plan_moves(tree, [
+    @mndocmove.Move::new("a.bin", "b.bin"),
+  ])
+  let current = @mndocmove.DocTree::new([
+    @mndocmove.Entry::new("a.bin", b"B"),
+    @mndocmove.Entry::new("extra.bin", b""),
+  ])
+  assert_eq(plan.check(current).changes(), [
+    @mndocmove.Modified("a.bin", 1, 1),
+    @mndocmove.Added("extra.bin", 0),
+  ])
+  assert_true(plan.check(plan.replay(tree), side=Result).is_match())
+}
+```

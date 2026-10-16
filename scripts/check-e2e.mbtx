@@ -1,0 +1,49 @@
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+async fn capture(args : Array[String], expected : Int) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected { println(out.text()); println(err.text()); abort("Unexpected exit code") }
+  out.text().replace_all(old="\r\n", new="\n").trim().to_owned()
+}
+
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else { fail("Use wasm or native") }
+  let tmp = @fs.tmpdir(prefix="mndocmove-check-")
+  let prefix = ["run", "cmd/main", "--target", target, "--target-dir", tmp + "/build", "--deny-warn", "--"]
+  let source = "examples/vscode/tree"
+  let plan = tmp + "/plan.json"
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["plan", source, "examples/vscode/moves.json", plan], 0))
+  assert_eq(capture(prefix + ["check", source, plan], 0), "[\"mndocmove-check\",1,\"source\",2,2,[]]")
+  ignore(capture(prefix + ["replay", source, plan, output], 0))
+  assert_eq(capture(prefix + ["check", output, plan, "--result"], 0), "[\"mndocmove-check\",1,\"result\",2,2,[]]")
+  let original = @fs.read_file(source + "/README.md").binary()
+  let changed = tmp + "/changed"
+  @fs.mkdir(changed)
+  @fs.write_file(changed + "/README.md", b"later edit")
+  @fs.write_file(changed + "/extra.bin", b"\xFF\x00")
+  let report = capture(prefix + ["check", changed, plan], 1)
+  let expected : Json = ["mndocmove-check", 1, "source", 2, 2, [
+    ["modified", "README.md", Json(original.length()), 10],
+    ["added", "extra.bin", 2],
+    ["removed", "example.mjs", Json(@fs.read_file(source + "/example.mjs").binary().length())],
+  ]]
+  assert_eq(@json.parse(report), expected)
+  assert_eq(@fs.readdir(changed, sort=true), ["README.md", "extra.bin"])
+  assert_eq(@fs.read_file(changed + "/README.md").binary(), b"later edit")
+  assert_eq(@fs.read_file(changed + "/extra.bin").binary(), b"\xFF\x00")
+  let report_file = tmp + "/report.json"
+  @fs.write_file(report_file, report)
+  ignore(capture(prefix + ["replay", source, report_file, tmp + "/invalid-export"], 1))
+  assert_true(!@fs.exists(tmp + "/invalid-export"))
+  ignore(capture(prefix + ["check", source, plan, "--unknown"], 2))
+  assert_eq(@fs.read_file(source + "/README.md").binary(), original)
+  println("Snapshot check E2E passed: " + target + "; full JSON drift, source/result guards, readonly input, report is not a plan. Files retained: " + tmp)
+}

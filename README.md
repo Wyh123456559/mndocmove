@@ -66,6 +66,8 @@ This repository has not yet been published to Mooncakes.
 - `MovePlan::review(context=3)`: complete file-move manifest plus contextual
   before/after Markdown hunks. CLI: `review PLAN_JSON [CONTEXT_LINES]`.
 - `MovePlan::replay(current_tree)`: refuses stale content, additions or deletions.
+- `MovePlan::check(current_tree, side=Source)`: all sorted snapshot differences;
+  use `side=Result` to verify a completed export without changing any files.
 - `MovePlan::restore(migrated_tree)`: checks the complete planned result and
   returns exact original paths and bytes; refuses later edits instead of merging.
 - `MovePlan::to_json_string/from_json_string`: deterministic, versioned complete
@@ -135,6 +137,18 @@ The report is **for review**, not a runnable patch: its asset manifest is not
 binary patch data. Use `replay` to perform the complete migration and enforce
 the snapshot guard. See [report format and checks](docs/review.md).
 
+## Check saved snapshots
+
+```text
+moon run cmd/main --target wasm -- check examples/vscode/tree plan.json
+moon run cmd/main --target wasm -- check relocated-docs plan.json --result
+```
+
+These read-only checks list all added, removed and modified files as sorted,
+versioned JSON. Equal-length byte changes are detected. Exit 0 means exact
+match; exit 1 reports drift or an input/I/O diagnostic. The result is a report,
+not an executable plan. See [snapshot check API and report format](docs/check.md).
+
 ## Restore a migration
 
 ```text
@@ -174,6 +188,8 @@ moon test --target js --deny-warn
 moon test --target native --deny-warn
 moon run scripts/e2e.mbtx -- wasm
 moon run scripts/e2e.mbtx -- native
+moon run scripts/check-e2e.mbtx -- wasm
+moon run scripts/check-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README
