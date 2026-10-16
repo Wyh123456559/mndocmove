@@ -154,7 +154,7 @@ fn html_destinations(
         "a", "img", "p", "div", "span", "details", "summary", "br", "hr", "figure",
         "figcaption", "table", "thead", "tbody", "tr", "td", "th", "ul", "ol", "li",
         "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "b", "i", "code", "pre",
-        "blockquote", "sup", "sub", "kbd", "samp",
+        "blockquote", "sup", "sub", "kbd", "samp", "picture", "source",
       ].contains(tag) {
       html_fail(path, tag_start, "Unsupported HTML tag: " + tag)
     }
@@ -197,12 +197,14 @@ fn html_destinations(
       attributes.add(attr)
       let is_url = (tag == "a" && attr == "href") ||
         (tag == "img" && attr == "src")
+      let is_srcset = (tag == "img" || tag == "source") && attr == "srcset"
       let safe = [
           "id", "class", "title", "alt", "width", "height", "align", "role", "target",
           "rel", "loading", "decoding", "border", "colspan", "rowspan", "open",
         ].contains(attr) ||
-        attr.has_prefix("aria-")
-      if !is_url && !safe {
+        attr.has_prefix("aria-") ||
+        (tag == "source" && (attr == "media" || attr == "type"))
+      if !is_url && !is_srcset && !safe {
         html_fail(
           path,
           start,
@@ -242,7 +244,9 @@ fn html_destinations(
       if raw.contains("{{") || raw.contains("${") || raw.contains("<%") {
         html_fail(path, value_start, "Template attributes are unsupported")
       }
-      if is_url && !raw.is_empty() {
+      if is_srcset {
+        result.append(srcset_destinations(raw, path, value_start))
+      } else if is_url && !raw.is_empty() {
         result.push({
           first: value_start,
           last: i - 1,

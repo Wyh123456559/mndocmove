@@ -102,3 +102,30 @@ test "keep a navigation link attached to the inventory root" {
   assert_eq(plan.restore(output).entries(), tree.entries())
 }
 ```
+
+Responsive image URLs and the fallback migrate together:
+
+```mbt check
+///|
+test "preserve responsive density descriptors during relocation" {
+  let source = "<picture><source srcset='a.png 1x, b.png 1.5x'><img src='a.png'></picture>"
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", source),
+    @mndocmove.Entry::new("a.png", b"A"),
+    @mndocmove.Entry::new("b.png", b"B"),
+  ])
+  let plan = @mndocmove.plan_moves(
+    tree,
+    [
+      @mndocmove.Move::new("a.png", "images/a.png"),
+      @mndocmove.Move::new("b.png", "images/b.png"),
+    ],
+    profile=StaticHtml,
+  )
+  assert_eq(
+    plan.replay(tree).get("r.md").unwrap().text(),
+    "<picture><source srcset='images/a.png 1x, images/b.png 1.5x'><img src='images/a.png'></picture>",
+  )
+  assert_eq(plan.edits().length(), 3)
+}
+```

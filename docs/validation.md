@@ -11,10 +11,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 57/57 tests; real README + bat HTML + root navigation CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 50/50 tests |
-| Windows x86-64, JS / Node | strict check passed | 50/50 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 57/57 tests; native CLI real README + bat HTML + root navigation E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 67/67 tests; Microsoft/bat/Svelte + root navigation CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 60/60 tests |
+| Windows x86-64, JS / Node | strict check passed | 60/60 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 67/67 tests; native Microsoft/bat/Svelte + root navigation E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -45,6 +45,8 @@ head-specific CI run; earlier failures are not reported as successful runs.
 The restored-snapshot head `43b5f19` subsequently passed all three systems,
 including Windows native E2E:
 [GitHub Actions run 38832637668](https://github.com/Wyh123456559/mndocmove/actions/runs/38832637668).
+The inventory-root head `2ad0b08` also passed all three systems:
+[GitHub Actions run 38834525464](https://github.com/Wyh123456559/mndocmove/actions/runs/38834525464).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -92,6 +94,16 @@ suffixes, reference definitions/static HTML, original URL spelling, save/load
 and restore, while retaining escape and invalid-root-move refusals. The real
 fixture E2E additionally moves an authored root navigation page together with
 the unmodified Microsoft README and example.
+
+Responsive image relocation adds nine black-box cases plus a tested README
+example. Tests cover source/img/fallback spans, implicit/decimal densities,
+exact descriptors and comma/whitespace layout, entities and percent-encoded
+filename spaces/commas, astral Unicode, source offsets, mixed Markdown/HTML,
+external URLs, wire/review/restore and deterministic output. Invalid grammars,
+duplicate densities, missing/escaping candidates and 256/257 candidate limits
+refuse the complete plan and leave later valid planning usable. The real Svelte
+README excerpt and both binary PNGs undergo saved-plan review/replay/restore;
+every original, exported and restored image byte is compared offline.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

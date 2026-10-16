@@ -95,12 +95,13 @@ test "comments code examples external URLs and details layout stay unchanged" {
 test "unknown URL grammars dynamic HTML and duplicate attributes refuse whole plan" {
   for
     source in [
-      "<img src=\"doc/logo.svg\" srcset=\"doc/logo.svg 2x\">", "<img src=\"doc/logo.svg\" SRC=\"doc/logo.svg\">",
+      "<img src=\"doc/logo.svg\" srcset=\"doc/logo.svg 400w\">", "<img src=\"doc/logo.svg\" SRC=\"doc/logo.svg\">",
       "<a href=\"doc/guide.md\" style=\"background:url(doc/logo.svg)\">x</a>", "<img src=\"doc/logo.svg\" data-src=\"doc/logo.svg\">",
       "<img src=doc/logo.svg>", "<base href=\"doc/\">", "<script src=\"doc/logo.svg\"></script>",
-      "<picture><img src=\"doc/logo.svg\"></picture>", "<a href=\"doc/guide.md?x=1&y=2\">x</a>",
-      "<a href=\"doc/guide.md?x=&bogus;\">x</a>", "<img src=\"{{image}}\">", "<div>\n{{content}}\n</div>",
-      "<a href=\" doc/guide.md\">x</a>", "<a href=\"doc/guide.md&#9;\">x</a>",
+      "<picture><source srcset=\"doc/logo.svg\" sizes=\"100vw\"><img src=\"doc/logo.svg\"></picture>",
+      "<a href=\"doc/guide.md?x=1&y=2\">x</a>", "<a href=\"doc/guide.md?x=&bogus;\">x</a>",
+      "<img src=\"{{image}}\">", "<div>\n{{content}}\n</div>", "<a href=\" doc/guide.md\">x</a>",
+      "<a href=\"doc/guide.md&#9;\">x</a>",
     ] {
     let tree = html_tree(source)
     expect_code(

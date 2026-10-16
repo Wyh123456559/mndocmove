@@ -15,15 +15,18 @@ renderer, sanitizer, MDX processor or general `.html` file rewriter.
 Supported tags (ASCII case insensitive): `a`, `img`, `p`, `div`, `span`,
 `details`, `summary`, `br`, `hr`, `figure`, `figcaption`, `table`, `thead`,
 `tbody`, `tr`, `td`, `th`, `ul`, `ol`, `li`, `h1`–`h6`, `strong`, `em`,
-`b`, `i`, `code`, `pre`, `blockquote`, `sup`, `sub`, `kbd`, `samp`.
+`b`, `i`, `code`, `pre`, `blockquote`, `sup`, `sub`, `kbd`, `samp`, `picture`, `source`.
 
-Only `a[href]` and `img[src]` are URL-bearing supported attributes. Preserved
+URL-bearing attributes are `a[href]`, `img[src]` and individual candidates in
+`img[srcset]` / `source[srcset]`. See the [strict srcset subset](srcset.md).
+Preserved
 attributes are `id`, `class`, `title`, `alt`, `width`, `height`, `align`,
 `role`, `target`, `rel`, `loading`, `decoding`, `border`, `colspan`, `rowspan`,
 `open`, and `aria-*`. Every value must be quoted; only `details open` may
 omit a value. Duplicate attributes are refused ignoring ASCII case.
+`source[media]` and `source[type]` are preserved selection metadata.
 Other attributes fail rather than hiding a possible URL grammar, including
-`data-src`, `srcset`, `style`, event handlers, SVG `xlink:href` and media sources.
+`data-src`, `sizes`, `style`, event handlers, SVG `xlink:href` and audio/video sources.
 
 URL entities must be recognized and semicolon terminated; use `&amp;` for
 query ampersands. Unknown/legacy unterminated references, replacement/invalid

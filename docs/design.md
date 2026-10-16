@@ -48,6 +48,10 @@ against changes to the migrated tree and exported through verified staging.
 
 Implemented sixth capability: root-directory navigation links through `.`/`..`,
 with directory-prefix moves, preserved suffixes and complete review/replay/restore.
+
+Implemented seventh capability: static responsive image candidates with preserved
+decimal density descriptors, source-selection metadata, fallback images and a
+licensed Svelte README/PNG migration/restore workflow.
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
