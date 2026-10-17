@@ -19,6 +19,22 @@ async fn capture(args : Array[String], expected : Int32) -> String {
 }
 
 ///|
+fn field(value : Json, key : String) -> Json {
+  match value {
+    Object(fields) => fields.get(key).unwrap()
+    _ => abort("Expected object")
+  }
+}
+
+///|
+fn items(value : Json) -> Array[Json] {
+  match value {
+    Array(values) => values
+    _ => abort("Expected array")
+  }
+}
+
+///|
 async fn main {
   let target = @env.args().last().unwrap_or("wasm")
   guard target == "wasm" || target == "native" else {
@@ -75,6 +91,45 @@ async fn main {
   ])
   let report_file = tmp + "/report.json"
   @fs.write_file(report_file, blocked)
+  let sarif_file = tmp + "/blocked.sarif"
+  ignore(capture(prefix + ["audit-sarif", root, moves, "docs", sarif_file], 1))
+  let sarif_bytes = @fs.read_file(sarif_file).binary()
+  let sarif = @json.parse(@fs.read_file(sarif_file).text())
+  assert_eq(field(sarif, "version"), Json("2.1.0"))
+  let run = items(field(sarif, "runs"))[0]
+  assert_eq(field(run, "columnKind"), Json("utf16CodeUnits"))
+  let results = items(field(run, "results"))
+  assert_eq(results.length(), 2)
+  let location = field(
+    items(field(results[0], "locations"))[0],
+    "physicalLocation",
+  )
+  assert_eq(
+    field(field(location, "artifactLocation"), "uri"),
+    Json("docs/a.md"),
+  )
+  assert_eq(field(field(location, "region"), "startColumn"), Json(5))
+  ignore(capture(prefix + ["audit-sarif", root, moves, "docs", sarif_file], 1))
+  assert_eq(@fs.read_file(sarif_file).binary(), sarif_bytes)
+  ignore(
+    capture(
+      prefix + ["audit-sarif", root, moves, "docs", root + "/inside.sarif"],
+      1,
+    ),
+  )
+  assert_true(!@fs.exists(root + "/inside.sarif"))
+  ignore(
+    capture(
+      prefix +
+      ["audit-sarif", root, moves, "../invalid", tmp + "/invalid.sarif"],
+      1,
+    ),
+  )
+  assert_true(!@fs.exists(tmp + "/invalid.sarif"))
+  ignore(
+    capture(prefix + ["replay", root, sarif_file, tmp + "/sarif-as-plan"], 1),
+  )
+  assert_true(!@fs.exists(tmp + "/sarif-as-plan"))
   ignore(capture(prefix + ["replay", root, report_file, tmp + "/partial"], 1))
   assert_true(!@fs.exists(tmp + "/partial"))
   ignore(capture(prefix + ["audit", root, moves, "--unknown"], 2))
@@ -103,6 +158,21 @@ async fn main {
     "[\"mndocmove-audit\",1,\"ready\",\"static-html\",4,3,[]]",
   )
   let plan = tmp + "/ready.json"
+  let ready_sarif = tmp + "/ready.sarif"
+  ignore(
+    capture(
+      prefix +
+      [
+        "audit-sarif", root, moves, "docs", ready_sarif, "--profile", "static-html",
+      ],
+      0,
+    ),
+  )
+  let ready_run = items(
+      field(@json.parse(@fs.read_file(ready_sarif).text()), "runs"),
+    )[0]
+  assert_eq(items(field(ready_run, "results")), [])
+  assert_eq(field(field(ready_run, "properties"), "ready"), Json(true))
   ignore(capture(prefix + ["plan", root, moves, plan, "--static-html"], 0))
   assert_true(
     capture(prefix + ["review", plan], 0).contains("samples/example.mjs"),
@@ -134,7 +204,7 @@ async fn main {
   println(
     "Migration audit E2E passed: " +
     target +
-    "; real README, continued per-file diagnostics, readonly/report guards, explicit profile, fixed-source plan/review/export/check/exact restore. Files retained: " +
+    "; real README, continued diagnostics, SARIF blocked/ready reports, readonly/exclusive/report guards, explicit profile, fixed-source plan/review/export/check/exact restore. Files retained: " +
     tmp,
   )
 }

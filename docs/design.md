@@ -98,6 +98,10 @@ Implemented eighteenth capability: explicit inventory-root URL profiles,
 preserving rooted/relative URL forms through moves, substitutions, repair and
 saved chains, with existing default policy compatibility and strict root scope.
 
+Implemented nineteenth capability: SARIF 2.1.0 preflight reporting with
+retained snapshots, BOM-aware UTF-16 point locations, encoded repository paths,
+complete diagnostic preservation and an exclusive-output CLI workflow.
+
 Later work, not implemented: site-route/extension inference, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

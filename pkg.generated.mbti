@@ -78,6 +78,7 @@ pub fn MoveAudit::is_ready(Self) -> Bool
 pub fn MoveAudit::plan(Self) -> MovePlan?
 pub fn MoveAudit::to_json_string(Self) -> String
 pub fn MoveAudit::to_repr(Self) -> @debug.Repr
+pub fn MoveAudit::to_sarif_string(Self, root_prefix? : String) -> String raise MoveError
 
 type MoveChain derive(@debug.Debug)
 pub fn MoveChain::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport

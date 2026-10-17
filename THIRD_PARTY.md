@@ -29,6 +29,15 @@ The included Apache license originates from the `moon new` module scaffold.
 Upstream licenses/notices stay in downloaded dependencies; this repository
 does not redistribute those dependency implementations.
 
+SARIF reporting references the [OASIS 2.1.0 specification/schema](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+under its [OASIS repository terms / IPR policies](https://github.com/oasis-tcs/sarif-spec/blob/main/LICENSE.md),
+and [GitHub SARIF documentation](https://docs.github.com/en/code-security/reference/code-scanning/sarif-files/sarif-support)
+([CC-BY-4.0](https://github.com/github/docs/blob/main/LICENSE)), checked 2026-10-17.
+No upstream prose, implementation or tests were copied. The official schema
+was downloaded only to an external temporary validation directory, not bundled.
+Python jsonschema 4.26.0 (MIT per [upstream COPYING](https://github.com/python-jsonschema/jsonschema/blob/main/COPYING))
+was used externally to validate reports; it is not a project/runtime dependency.
+
 The [WHATWG media](https://html.spec.whatwg.org/multipage/media.html) and
 [source element](https://html.spec.whatwg.org/multipage/embedded-content.html#the-source-element)
 requirements are additional semantic references (same WHATWG license above,

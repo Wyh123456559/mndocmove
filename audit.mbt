@@ -2,6 +2,7 @@
 /// Immutable migration preflight. A complete plan exists only when every file
 /// passed; failed audits retain diagnostics, never a partial result or edits.
 struct MoveAudit {
+  original : DocTree
   profile : Profile
   files : Int32
   checked : Int32
@@ -63,6 +64,7 @@ pub fn audit_moves(
   let moves = validated_moves(tree, requested)
   if moves.is_empty() {
     return {
+      original: tree,
       profile,
       files: tree.files.length(),
       checked: 0,
@@ -104,7 +106,14 @@ pub fn audit_moves(
   } else {
     None
   }
-  { profile, files: tree.files.length(), checked, problems, ready, }
+  {
+    original: tree,
+    profile,
+    files: tree.files.length(),
+    checked,
+    problems,
+    ready,
+  }
 }
 
 ///|

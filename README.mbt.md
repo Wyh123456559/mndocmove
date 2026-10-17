@@ -347,6 +347,24 @@ test "explicit root URL profile" {
 }
 ```
 
+Export a migration preflight for SARIF viewers:
+
+```mbt check
+///|
+test "emit SARIF without exposing a partial migration plan" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](missing.bin)"),
+  ])
+  let audit = @mndocmove.audit_moves(tree, [
+    @mndocmove.Move::new("r.md", "manual/r.md"),
+  ])
+  let report = audit.to_sarif_string(root_prefix="docs")
+  assert_true(report.contains("\"version\":\"2.1.0\""))
+  assert_true(report.contains("\"uri\":\"docs/r.md\""))
+  assert_true(audit.plan() is None)
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

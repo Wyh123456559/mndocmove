@@ -13,10 +13,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 162/162 tests; all nine E2E scripts passed |
-| Windows x86-64, Wasm-GC | strict check passed | 155/155 tests |
-| Windows x86-64, JS / Node | strict check passed | 155/155 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 162/162 tests; explicit root URL CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 169/169 tests; all nine E2E scripts passed |
+| Windows x86-64, Wasm-GC | strict check passed | 162/162 tests |
+| Windows x86-64, JS / Node | strict check passed | 162/162 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 169/169 tests; SARIF audit/fix/export/restore CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -80,6 +80,8 @@ and seven E2E scripts on both CLI targets:
 [GitHub Actions run 39023904461](https://github.com/Wyh123456559/mndocmove/actions/runs/39023904461).
 The reference-retarget head `1c2e476` passed the complete three-OS workflow:
 [GitHub Actions run 39025418251](https://github.com/Wyh123456559/mndocmove/actions/runs/39025418251).
+The explicit-root-profile head `3394a79` passed the complete three-OS workflow:
+[GitHub Actions run 39025730123](https://github.com/Wyh123456559/mndocmove/actions/runs/39025730123).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -275,6 +277,30 @@ review/export/result-check/exact restore and policy inheritance through adoption
 It ran on both local CLI targets; all nine Wasm E2Es were rerun. CI executes all
 nine on Wasm/native in each OS. MDN is a linked semantic reference only, with
 license attribution in THIRD_PARTY.md; no new package or downloaded fixture.
+
+SARIF preflight adds five black-box cases, a coordinate/encoder boundary case
+and a tested README example. They cover exact diagnostic/message preservation,
+brace-safe message arguments, BOM-independent UTF-16 coordinates, CRLF/bare CR/
+LF, tabs, astral characters, encoded spaces/Unicode/percent/fragment filenames,
+unknown/newline/invalid offsets, deterministic key/rule/result order, prefix
+refusal/recovery, no-op/empty metadata and all 4096 untruncated results with
+deduplicated rules. The extended real README audit E2E writes blocked/ready
+reports, checks source positions/URIs, exclusive/outside-root output and report/
+plan separation, then retains the full fixed-source export/restore workflow.
+It executed on both local CLI targets. All nine Wasm E2Es were rerun after
+retaining the audit snapshot; CI runs the extended script on both CLI targets.
+
+Both blocked and ready reports were also validated locally against the official
+OASIS 2.1.0 errata01 schema, SHA-256
+`C3B4BB2D6093897483348925AAA73AF03B3E3F4BD4CA38CEF26DCB4212A2682E`,
+using external Python jsonschema 4.26.0. The optional command is
+`python -m jsonschema --instance REPORT.sarif sarif-schema-2.1.0.json` after
+obtaining the [official schema](https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json).
+That CLI emits its own deprecation notice; validation completed successfully.
+Neither the schema nor validator/dependencies are bundled or required by the
+module/CI. Schema validation is not evidence of hosted GitHub ingestion or
+viewer rendering, which were not exercised. Source/license references are
+recorded in THIRD_PARTY.md, with no external implementation/tests copied.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

@@ -63,6 +63,10 @@ This repository has not yet been published to Mooncakes.
   `MoveAudit::plan()` yields the complete ordinary plan; blocked audits yield
   none. CLI: `audit ROOT MOVES_JSON [--static-html]`.
   See [batch preflight, limits and offline demo](docs/audit.md).
+- `MoveAudit::to_sarif_string(root_prefix="docs")`: SARIF 2.1.0 diagnostics
+  with URI-safe repository paths and BOM-aware UTF-16 point locations.
+  CLI: `audit-sarif ROOT MOVES_JSON ROOT_PREFIX NEW_SARIF [--profile NAME]`.
+  See [SARIF report scope and verification](docs/sarif.md).
 - `plan_retargets(tree, pairs)`: update references between existing files while
   retaining every path and old resource. `retargets()` records substitutions;
   saved review/replay/restore and first-stage chains remain available.

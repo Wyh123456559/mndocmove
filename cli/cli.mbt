@@ -316,11 +316,45 @@ async fn save_moves(
 }
 
 ///|
+async fn audit_sarif(
+  root : String,
+  moves : String,
+  prefix : String,
+  output : String,
+  profile : @lib.Profile,
+) -> Int32 {
+  let audit = @lib.audit_moves(
+    read_tree(root),
+    @lib.moves_from_json(read_text(moves)),
+    profile~,
+  )
+  let report = audit.to_sarif_string(root_prefix=prefix)
+  @fs.write_file(outside_path(root, output), report, create_mode=CreateNew)
+  println(
+    "SARIF report written; " +
+    (if audit.is_ready() {
+      "ready"
+    } else {
+      "blocked; no migration plan produced"
+    }),
+  )
+  if audit.is_ready() {
+    0
+  } else {
+    1
+  }
+}
+
+///|
 /// Plans, reviews, replays or restores a migration. All filesystem outputs
 /// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["audit-sarif", root, moves, prefix, output] =>
+        return audit_sarif(root, moves, prefix, output, CommonMark)
+      ["audit-sarif", root, moves, prefix, output, "--profile", name] =>
+        return audit_sarif(root, moves, prefix, output, named_profile(name))
       ["plan", root, moves, output, "--profile", name] =>
         save_moves(root, moves, output, named_profile(name))
       ["retarget", root, pairs, output, "--profile", name] =>
@@ -484,6 +518,9 @@ pub async fn run(args : Array[String]) -> Int32 {
         )
         println(
           "Planning commands also accept --profile NAME: commonmark, static-html, commonmark-root or static-html-root (see docs/rooted-urls.md).",
+        )
+        println(
+          "       mndocmove audit-sarif ROOT MOVES_JSON ROOT_PREFIX NEW_SARIF [--profile NAME]",
         )
         return 2
       }
