@@ -34,8 +34,9 @@ Full plan:
 ```
 
 Positions: magic string, version, profile, files, moves. Profiles are
-`commonmark` and `static-html`; unknown values are refused. Existing CommonMark
-version-1 plans retain their byte-identical canonical encoding.
+`commonmark`, `static-html`, `commonmark-root` and `static-html-root`; unknown
+values are refused. See [explicit URL root scope](rooted-urls.md). Existing
+CommonMark/static-HTML version-1 plans retain byte-identical canonical encoding.
 Each file is `[relative_path, uppercase_hex_bytes]`; lowercase hex is accepted
 on input and canonicalized. Files and moves are sorted by original path.
 Reloading rebuilds the tree and runs the planner; edit offsets are never trusted

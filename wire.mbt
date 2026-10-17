@@ -151,12 +151,7 @@ fn MovePlan::wire_json(self : MovePlan) -> Json {
   let value : Json = [
     Json(self.wire_magic()),
     1,
-    Json(
-      match self.profile {
-        CommonMark => "commonmark"
-        StaticHtml => "static-html"
-      },
-    ),
+    Json(profile_name(self.profile)),
     Json::array(files),
     Json::array(moves),
   ]
@@ -182,6 +177,8 @@ fn wire_profile(name : String) -> Profile raise MoveError {
   match name {
     "commonmark" => CommonMark
     "static-html" => StaticHtml
+    "commonmark-root" => CommonMarkRoot
+    "static-html-root" => StaticHtmlRoot
     _ => {
       refuse("InvalidPlan", "", "Unknown syntax profile")
       abort("unreachable")

@@ -21,6 +21,7 @@ is invoked as a separate executable and is not bundled or linked into this modul
 | Svelte | pinned fixture [source](examples/svelte/SOURCE.md) | MIT, retained [license](examples/svelte/LICENSE.md) | Verbatim README header and unmodified dark/light PNGs |
 | MDN interactive-examples | pinned fixture [source](examples/media/SOURCE.md) | CC0-1.0, retained [license](examples/media/LICENSE-CC0) | Unmodified flower WebM and roar MP3; markup/poster/captions are authored separately |
 | WHATWG HTML Standard | [srcset](https://html.spec.whatwg.org/multipage/images.html#srcset-attributes) and [sizes requirements](https://html.spec.whatwg.org/multipage/images.html#sizes-attributes), checked 2026-10-16 | [CC BY 4.0; source-code portions BSD-3-Clause](https://github.com/whatwg/html/blob/main/LICENSE), copyright WHATWG | Semantic reference for the documented subset; no spec prose, implementation or tests copied |
+| MDN URL reference | [Resolving relative references](https://developer.mozilla.org/en-US/docs/Web/API/URL_API/Resolving_relative_references), checked 2026-10-17 | [CC-BY-SA 2.5 or later for documentation](https://developer.mozilla.org/en-US/docs/MDN/Writing_guidelines/Attrib_copyright_license) | Reference link for rooted/document-relative semantics; no MDN prose, code or tests copied |
 
 Runtime exit bridging uses the C `exit` function on native and async's
 `runtime/exit` host import on Wasm; it relies on those runtime interfaces.

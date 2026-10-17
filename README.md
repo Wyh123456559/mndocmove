@@ -72,6 +72,10 @@ This repository has not yet been published to Mooncakes.
   support for quoted `<a href>` / `<img src>`, responsive image candidates and
   embedded video/audio/poster/caption resources in Markdown. The default
   `CommonMark` profile retains its conservative HTML refusal.
+- `Profile::CommonMarkRoot` / `StaticHtmlRoot`: explicitly interpret single-slash
+  URLs from the inventory's URL root, preserving root-relative URL form.
+  CLI planning commands accept `--profile commonmark-root` / `static-html-root`.
+  See [root URL scope and demo](docs/rooted-urls.md).
 - `MovePlan::edits/moves/preview`: independent review data.
 - `MovePlan::review(context=3)`: complete file-move manifest plus contextual
   before/after Markdown hunks. CLI: `review PLAN_JSON [CONTEXT_LINES]`.
@@ -117,7 +121,7 @@ Links to missing targets are refused; include all local targets in your root.
 
 Raw HTML requires the static HTML profile; wiki links and template markers
 are refused when planning a nonempty move list. MDX, site routing, extensionless-to-Markdown inference,
-heading renames, root-relative URLs, encoded separators/NUL, paths escaping
+heading renames, root-relative URLs without an explicit root profile, encoded separators/NUL, paths escaping
 the root, symlinks, special files and unknown wire semantics are unsupported.
 Links to the inventory root through `.` / `..` are supported and stay attached
 to that root when documents move. See [root navigation](docs/root-links.md).
@@ -272,6 +276,8 @@ moon run scripts/audit-e2e.mbtx -- wasm
 moon run scripts/audit-e2e.mbtx -- native
 moon run scripts/retarget-e2e.mbtx -- wasm
 moon run scripts/retarget-e2e.mbtx -- native
+moon run scripts/rooted-e2e.mbtx -- wasm
+moon run scripts/rooted-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

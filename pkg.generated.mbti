@@ -112,6 +112,8 @@ pub fn MovePlan::to_repr(Self) -> @debug.Repr
 pub(all) enum Profile {
   CommonMark
   StaticHtml
+  CommonMarkRoot
+  StaticHtmlRoot
 } derive(@debug.Debug)
 pub fn Profile::to_repr(Self) -> @debug.Repr
 

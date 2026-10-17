@@ -325,6 +325,28 @@ test "retarget existing resources without removing the old file" {
 }
 ```
 
+Keep leading-slash URLs rooted while relocating their target files:
+
+```mbt check
+///|
+test "explicit root URL profile" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](/a.bin)"),
+    @mndocmove.Entry::new("a.bin", b"A"),
+  ])
+  let plan = @mndocmove.plan_moves(
+    tree,
+    [@mndocmove.Move::new("a.bin", "media/a.bin")],
+    profile=CommonMarkRoot,
+  )
+  assert_eq(
+    plan.replay(tree).get("r.md").unwrap().text(),
+    "[asset](/media/a.bin)",
+  )
+  assert_eq(plan.restore(plan.replay(tree)).entries(), tree.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

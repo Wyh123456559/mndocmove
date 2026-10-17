@@ -184,10 +184,18 @@ pub fn MovePlan::edits(self : MovePlan) -> Array[Edit] {
 
 ///|
 /// Explicit syntax policy. StaticHtml adds a conservative HTML subset.
+/// Root variants additionally bind leading-slash URLs to the inventory root.
 pub(all) enum Profile {
   CommonMark
   StaticHtml
+  CommonMarkRoot
+  StaticHtmlRoot
 } derive(@debug.Debug)
+
+///|
+fn Profile::allows_root(self : Profile) -> Bool {
+  self is CommonMarkRoot || self is StaticHtmlRoot
+}
 
 ///|
 pub extend Profile with @debug.Debug::{to_repr}

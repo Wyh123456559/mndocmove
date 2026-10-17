@@ -66,14 +66,24 @@ fn moved(path : String, moves : Array[Move]) -> String {
 }
 
 ///|
-fn resolve_path(source : String, relative : String) -> String raise MoveError {
-  if relative.has_prefix("/") || relative.contains("\\") {
+fn resolve_path(
+  source : String,
+  relative : String,
+  from_root~ : Bool = false,
+) -> String raise MoveError {
+  let rooted = relative.has_prefix("/") && from_root
+  if (relative.has_prefix("/") && !from_root) || relative.contains("\\") {
     refuse(
       "UnsupportedUrl", source, "Root-relative and backslash URLs need an explicit site profile",
     )
   }
-  let parts = source.split("/").map(fn(s) { s.to_owned() }).to_array()
-  ignore(parts.pop())
+  let parts = if rooted {
+    []
+  } else {
+    let parts = source.split("/").map(fn(s) { s.to_owned() }).to_array()
+    ignore(parts.pop())
+    parts
+  }
   for part in relative.split("/") {
     match part.to_owned() {
       "" | "." => ()

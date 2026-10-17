@@ -10,6 +10,8 @@ fn profile_name(profile : Profile) -> String {
   match profile {
     CommonMark => "commonmark"
     StaticHtml => "static-html"
+    CommonMarkRoot => "commonmark-root"
+    StaticHtmlRoot => "static-html-root"
   }
 }
 

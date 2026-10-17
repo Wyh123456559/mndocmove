@@ -280,11 +280,71 @@ async fn save_retargets(
 }
 
 ///|
+fn named_profile(name : String) -> @lib.Profile raise {
+  match name {
+    "commonmark" => CommonMark
+    "static-html" => StaticHtml
+    "commonmark-root" => CommonMarkRoot
+    "static-html-root" => StaticHtmlRoot
+    _ => {
+      stop(
+        "InvalidProfile: use commonmark, static-html, commonmark-root or static-html-root",
+      )
+      abort("unreachable")
+    }
+  }
+}
+
+///|
+async fn save_moves(
+  root : String,
+  moves : String,
+  output : String,
+  profile : @lib.Profile,
+) -> Unit {
+  let plan = @lib.plan_moves(
+    read_tree(root),
+    @lib.moves_from_json(read_text(moves)),
+    profile~,
+  )
+  @fs.write_file(
+    outside_path(root, output),
+    plan.to_json_string(),
+    create_mode=CreateNew,
+  )
+  println(plan.preview())
+}
+
+///|
 /// Plans, reviews, replays or restores a migration. All filesystem outputs
 /// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["plan", root, moves, output, "--profile", name] =>
+        save_moves(root, moves, output, named_profile(name))
+      ["retarget", root, pairs, output, "--profile", name] =>
+        save_retargets(root, pairs, output, named_profile(name))
+      ["relink", root, moves, output, "--profile", name] =>
+        save_relinks(
+          root,
+          @lib.moves_from_json(read_text(moves)),
+          output,
+          named_profile(name),
+        )
+      ["plan-git", root, status, prefix, output, "--profile", name] =>
+        plan_git(root, status, prefix, output, named_profile(name))
+      ["relink-git", root, status, prefix, output, "--profile", name] =>
+        save_relinks(
+          root,
+          read_git_moves(status, prefix),
+          output,
+          named_profile(name),
+        )
+      ["audit", root, moves, "--profile", name] =>
+        return audit_tree(root, moves, named_profile(name))
+      ["extend", root, saved, moves, output, "--profile", name] =>
+        extend_saved(root, saved, moves, output, Some(named_profile(name)))
       ["retarget", root, pairs, output] =>
         save_retargets(root, pairs, output, CommonMark)
       ["retarget", root, pairs, output, "--static-html"] =>
@@ -421,6 +481,9 @@ pub async fn run(args : Array[String]) -> Int32 {
       _ => {
         println(
           "Usage: mndocmove audit ROOT MOVES_JSON [--static-html]\n       mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove plan-git OLD_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove relink CURRENT_ROOT ALREADY_RENAMED_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove relink-git CURRENT_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove check-renamed CURRENT_ROOT PENDING_PLAN_JSON\n       mndocmove adopt CURRENT_ROOT PENDING_PLAN_JSON NEW_REPAIR_PLAN_JSON\n       mndocmove retarget ROOT PAIRS_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+        )
+        println(
+          "Planning commands also accept --profile NAME: commonmark, static-html, commonmark-root or static-html-root (see docs/rooted-urls.md).",
         )
         return 2
       }

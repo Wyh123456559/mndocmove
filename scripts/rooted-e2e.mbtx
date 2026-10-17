@@ -1,0 +1,114 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-rooted-")
+  let root = tmp + "/docs"
+  @fs.mkdir(root)
+  let original = @fs.read_file("examples/vscode/tree/README.md").text()
+  let asset = @fs.read_file("examples/vscode/tree/example.mjs").binary()
+  let page = "\uFEFF# 😀\r\n\r\n[Home](/README.md#intro) [Root](/?view=1)\r\n\r\n<a href='/example.mjs'>sample</a>\r\n"
+  @fs.write_file(root + "/README.md", original)
+  @fs.write_file(root + "/example.mjs", asset)
+  @fs.write_file(root + "/root.md", page)
+  let moves = tmp + "/moves.json"
+  @fs.write_file(
+    moves, "[[\"README.md\",\"manual/README.md\"],[\"example.mjs\",\"samples/example.mjs\"],[\"root.md\",\"manual/root.md\"]]",
+  )
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  ignore(capture(prefix + ["audit", root, moves], 1))
+  ignore(
+    capture(prefix + ["audit", root, moves, "--profile", "static-html-root"], 0),
+  )
+  let plan = tmp + "/plan.json"
+  assert_true(
+    capture(
+      prefix +
+      ["plan", root, moves, tmp + "/invalid.json", "--profile", "unknown"],
+      1,
+    ).contains("InvalidProfile"),
+  )
+  assert_true(!@fs.exists(tmp + "/invalid.json"))
+  ignore(
+    capture(
+      prefix + ["plan", root, moves, plan, "--profile", "static-html-root"],
+      0,
+    ),
+  )
+  assert_true(
+    capture(prefix + ["review", plan], 0).contains("/samples/example.mjs"),
+  )
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  let expected = page
+    .replace(old="/README.md#", new="/manual/README.md#")
+    .replace(old="/example.mjs'", new="/samples/example.mjs'")
+  assert_eq(@fs.read_file(output + "/manual/root.md").text(), expected)
+  assert_eq(
+    @fs.read_file(output + "/manual/README.md").text(),
+    original.replace(old="(./example.mjs)", new="(../samples/example.mjs)"),
+  )
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), asset)
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  assert_eq(@fs.read_file(restored + "/root.md").text(), page)
+  assert_eq(@fs.read_file(restored + "/README.md").text(), original)
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  // The same saved profile follows verified adoption of physical-only moves.
+  let physical = tmp + "/physical"
+  @fs.mkdir(physical)
+  @fs.mkdir(physical + "/manual")
+  @fs.mkdir(physical + "/samples")
+  @fs.write_file(physical + "/manual/README.md", original)
+  @fs.write_file(physical + "/manual/root.md", page)
+  @fs.write_file(physical + "/samples/example.mjs", asset)
+  let adopted = tmp + "/adopted.json"
+  ignore(capture(prefix + ["adopt", physical, plan, adopted], 0))
+  ignore(
+    capture(prefix + ["replay", physical, adopted, tmp + "/adopted-output"], 0),
+  )
+  assert_eq(
+    @fs.read_file(tmp + "/adopted-output/manual/root.md").text(),
+    expected,
+  )
+  assert_eq(@fs.read_file(root + "/root.md").text(), page)
+  assert_eq(@fs.read_file(root + "/README.md").text(), original)
+  assert_eq(@fs.read_file(root + "/example.mjs").binary(), asset)
+  println(
+    "Root URL E2E passed: " +
+    target +
+    "; real README plus authored rooted page, explicit profile/audit, review/export/check/restore, inherited adoption policy and exact bytes. Files retained: " +
+    tmp,
+  )
+}

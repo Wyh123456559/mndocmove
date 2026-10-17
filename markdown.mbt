@@ -52,8 +52,8 @@ fn destinations(
           }
         RawHtml(node) =>
           match profile {
-            CommonMark => unsupported(node.meta, "Raw HTML")
-            StaticHtml =>
+            CommonMark | CommonMarkRoot => unsupported(node.meta, "Raw HTML")
+            StaticHtml | StaticHtmlRoot =>
               html_ranges.push(
                 (node.meta.loc.first_ccode, node.meta.loc.last_ccode),
               )
@@ -71,8 +71,8 @@ fn destinations(
         LinkRefDefinition(def) => add(def.v)
         HtmlBlock(node) =>
           match profile {
-            CommonMark => unsupported(node.meta, "HTML blocks")
-            StaticHtml =>
+            CommonMark | CommonMarkRoot => unsupported(node.meta, "HTML blocks")
+            StaticHtml | StaticHtmlRoot =>
               html_ranges.push(
                 (node.meta.loc.first_ccode, node.meta.loc.last_ccode),
               )
@@ -161,7 +161,12 @@ fn rewrite(
       continue
     }
     let decoded = decode_url_path(url_path, file.path)
-    let target = resolve_path(file.path, decoded)
+    let rooted = url_path.has_prefix("/") && profile.allows_root()
+    let target = resolve_path(
+      file.path,
+      decoded,
+      from_root=profile.allows_root(),
+    )
     let target_exists = tree.files.any(fn(entry) { under(entry.path, target) })
     if !target_exists {
       refuse(
@@ -189,16 +194,26 @@ fn rewrite(
         offset=dest.first,
       )
     }
-    let current_target = Some(resolve_path(next_path, decoded)) catch {
+    let current_target = Some(
+      resolve_path(next_path, decoded, from_root=profile.allows_root()),
+    ) catch {
       _ => None
     }
     if current_target == Some(new_target) {
       continue
     }
-    let trailing = if url_path.has_suffix("/") { "/" } else { "" }
-    let cooked = encode_url_path(relative_path(next_path, new_target)) +
-      trailing +
-      suffix
+    let trailing = if url_path.has_suffix("/") &&
+      !(rooted && new_target.is_empty()) {
+      "/"
+    } else {
+      ""
+    }
+    let path = if rooted {
+      "/" + encode_url_path(new_target)
+    } else {
+      encode_url_path(relative_path(next_path, new_target))
+    }
+    let cooked = path + trailing + suffix
     expected[index] = cooked
     let after = if dest.html {
       html_encode(cooked)

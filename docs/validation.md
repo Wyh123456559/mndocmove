@@ -13,10 +13,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 153/153 tests; all eight E2E scripts passed |
-| Windows x86-64, Wasm-GC | strict check passed | 146/146 tests |
-| Windows x86-64, JS / Node | strict check passed | 146/146 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 153/153 tests; existing-file retarget CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 162/162 tests; all nine E2E scripts passed |
+| Windows x86-64, Wasm-GC | strict check passed | 155/155 tests |
+| Windows x86-64, JS / Node | strict check passed | 155/155 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 162/162 tests; explicit root URL CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -78,6 +78,8 @@ targets and six E2E scripts on both CLI targets:
 The batch-audit head `90b819f` passed all three systems, four library targets
 and seven E2E scripts on both CLI targets:
 [GitHub Actions run 39023904461](https://github.com/Wyh123456559/mndocmove/actions/runs/39023904461).
+The reference-retarget head `1c2e476` passed the complete three-OS workflow:
+[GitHub Actions run 39025418251](https://github.com/Wyh123456559/mndocmove/actions/runs/39025418251).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -261,6 +263,18 @@ E2E retains both old and replacement files through saved review/export/check/
 restore and refuses existing/inside-source outputs and later byte edits. Both
 local CLI targets executed it; all eight Wasm E2Es were run after the shared
 model/rewrite/wire changes. CI covers all eight scripts on both CLI targets.
+
+Explicit rooted URL profiles add seven black-box cases, an exact chain wire-size
+case and a tested README example. They cover mixed rooted/relative references,
+unchanged spelling after source-only moves, root suffixes, authority URLs,
+HTML/media/srcset, encoded Unicode names, missing/escaping/ambiguous URLs,
+directory disappearance/swaps, profile wire compatibility and no-op bytes.
+Retarget/audit/relink/adoption/chain interactions are checked. The new real
+README plus authored page E2E verifies named-profile refusal/recovery, saved
+review/export/result-check/exact restore and policy inheritance through adoption.
+It ran on both local CLI targets; all nine Wasm E2Es were rerun. CI executes all
+nine on Wasm/native in each OS. MDN is a linked semantic reference only, with
+license attribution in THIRD_PARTY.md; no new package or downloaded fixture.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

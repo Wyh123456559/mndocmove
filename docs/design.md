@@ -94,7 +94,11 @@ Implemented seventeenth capability: simultaneous existing-file reference
 substitution, retaining all old/new files, with distinct saved intent,
 guarded replay/restore and composition with later physical moves.
 
-Later work, not implemented: carefully specified site-route profiles, editor
+Implemented eighteenth capability: explicit inventory-root URL profiles,
+preserving rooted/relative URL forms through moves, substitutions, repair and
+saved chains, with existing default policy compatibility and strict root scope.
+
+Later work, not implemented: site-route/extension inference, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
 or network availability check is part of the library.
