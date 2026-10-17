@@ -96,6 +96,7 @@ pub fn audit_moves(
       profile,
       moves,
       relinks: [],
+      retargets: [],
       adopted_from: None,
       edits,
       result: DocTree::new(output),

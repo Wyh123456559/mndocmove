@@ -260,11 +260,35 @@ async fn audit_tree(
 }
 
 ///|
+async fn save_retargets(
+  root : String,
+  pairs : String,
+  output : String,
+  profile : @lib.Profile,
+) -> Unit {
+  let plan = @lib.plan_retargets(
+    read_tree(root),
+    @lib.moves_from_json(read_text(pairs)),
+    profile~,
+  )
+  @fs.write_file(
+    outside_path(root, output),
+    plan.to_json_string(),
+    create_mode=CreateNew,
+  )
+  println(plan.preview())
+}
+
+///|
 /// Plans, reviews, replays or restores a migration. All filesystem outputs
 /// require unused paths; source inventories are never modified.
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["retarget", root, pairs, output] =>
+        save_retargets(root, pairs, output, CommonMark)
+      ["retarget", root, pairs, output, "--static-html"] =>
+        save_retargets(root, pairs, output, StaticHtml)
       ["audit", root, moves] => return audit_tree(root, moves, CommonMark)
       ["audit", root, moves, "--static-html"] =>
         return audit_tree(root, moves, StaticHtml)
@@ -396,7 +420,7 @@ pub async fn run(args : Array[String]) -> Int32 {
       }
       _ => {
         println(
-          "Usage: mndocmove audit ROOT MOVES_JSON [--static-html]\n       mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove plan-git OLD_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove relink CURRENT_ROOT ALREADY_RENAMED_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove relink-git CURRENT_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove check-renamed CURRENT_ROOT PENDING_PLAN_JSON\n       mndocmove adopt CURRENT_ROOT PENDING_PLAN_JSON NEW_REPAIR_PLAN_JSON\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
+          "Usage: mndocmove audit ROOT MOVES_JSON [--static-html]\n       mndocmove plan ROOT MOVES_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove plan-git OLD_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove relink CURRENT_ROOT ALREADY_RENAMED_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove relink-git CURRENT_ROOT NAME_STATUS_Z ROOT_PREFIX NEW_PLAN_JSON [--static-html]\n       mndocmove check-renamed CURRENT_ROOT PENDING_PLAN_JSON\n       mndocmove adopt CURRENT_ROOT PENDING_PLAN_JSON NEW_REPAIR_PLAN_JSON\n       mndocmove retarget ROOT PAIRS_JSON NEW_PLAN_JSON [--static-html]\n       mndocmove merge ROOT LEFT_PLAN RIGHT_PLAN NEW_PLAN_JSON\n       mndocmove extend ROOT SAVED_PLAN MOVES_JSON NEW_CHAIN_JSON [--static-html|--commonmark]\n       mndocmove check ROOT PLAN_JSON [--result]\n       mndocmove review PLAN_JSON [CONTEXT_LINES]\n       mndocmove replay ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY\n       mndocmove restore MIGRATED_ROOT PLAN_JSON NEW_OUTPUT_DIRECTORY",
         )
         return 2
       }

@@ -13,10 +13,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 144/144 tests; all seven E2E scripts passed, including batch migration preflight |
-| Windows x86-64, Wasm-GC | strict check passed | 137/137 tests |
-| Windows x86-64, JS / Node | strict check passed | 137/137 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 144/144 tests; real README-to-audit/fix/export/restore CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 153/153 tests; all eight E2E scripts passed |
+| Windows x86-64, Wasm-GC | strict check passed | 146/146 tests |
+| Windows x86-64, JS / Node | strict check passed | 146/146 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 153/153 tests; existing-file retarget CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -75,6 +75,9 @@ targets and six E2E scripts on both CLI targets:
 The verified-adoption head `28c54e3` passed all three systems, four library
 targets and six E2E scripts on both CLI targets:
 [GitHub Actions run 38886685245](https://github.com/Wyh123456559/mndocmove/actions/runs/38886685245).
+The batch-audit head `90b819f` passed all three systems, four library targets
+and seven E2E scripts on both CLI targets:
+[GitHub Actions run 39023904461](https://github.com/Wyh123456559/mndocmove/actions/runs/39023904461).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -247,6 +250,17 @@ Wasm E2Es were rerun after extracting the shared move-map structural gate.
 CI now runs seven E2E scripts on both CLI targets in all three operating systems.
 No new fixture download, dependency, externally copied code or test is used;
 existing MIT fixture and dependency provenance remains in THIRD_PARTY.md.
+
+Existing-file retargeting adds seven black-box cases, one exact chain wire-budget
+case and a tested README example. They cover preserved inventories/opaque bytes,
+one-hop cycles/chains/many-to-one, deterministic intent ordering, references and
+static media, BOM/CRLF/Unicode source spans, missing/directory/duplicate/unsafe
+maps, 4096/4097 intentions, guarded recovery, strict wire and first-stage chain
+composition. Empty substitutions retain no-op behavior. The new MIT README
+E2E retains both old and replacement files through saved review/export/check/
+restore and refuses existing/inside-source outputs and later byte edits. Both
+local CLI targets executed it; all eight Wasm E2Es were run after the shared
+model/rewrite/wire changes. CI covers all eight scripts on both CLI targets.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

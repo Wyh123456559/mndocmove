@@ -171,6 +171,7 @@ struct MovePlan {
   profile : Profile
   moves : Array[Move]
   relinks : Array[Move]
+  retargets : Array[Move]
   adopted_from : DocTree?
   edits : Array[Edit]
   result : DocTree
@@ -206,6 +207,13 @@ pub fn MovePlan::moves(self : MovePlan) -> Array[Move] {
 /// migration plans return []; repair plans have no pending file moves().
 pub fn MovePlan::relinks(self : MovePlan) -> Array[Move] {
   self.relinks.copy()
+}
+
+///|
+/// Simultaneous existing-file reference substitutions. All file paths/opaque
+/// bytes are retained; these are neither pending moves nor historical renames.
+pub fn MovePlan::retargets(self : MovePlan) -> Array[Move] {
+  self.retargets.copy()
 }
 
 ///|

@@ -23,6 +23,10 @@ the actual baseline paths. Empty adoption intents canonicalize to ordinary no-op
 
 Move input: `[["docs","manual"],["img","assets"]]`.
 
+Existing-file substitutions use `mndocmove-retarget` version 1 with input files
+and replacement pairs, recomputed by `plan_retargets` on loading. These are not
+physical moves; chains accept the form as their first plan. See [retargeting](retarget.md).
+
 Full plan:
 
 ```json

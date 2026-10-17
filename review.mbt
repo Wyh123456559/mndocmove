@@ -262,6 +262,20 @@ pub fn MovePlan::review(
       "Verified move adoption: input paths and every byte match the saved baseline after physical renames.\n",
     )
   }
+  if !self.retargets.is_empty() {
+    out.write_string(
+      "Reference retargeting; every file remains at its original path.\n",
+    )
+    for change in self.retargets {
+      out.write_string(
+        "retarget " +
+        review_path(change.source) +
+        " -> " +
+        review_path(change.destination) +
+        "\n",
+      )
+    }
+  }
   if !self.relinks.is_empty() {
     out.write_string(
       "Link-only repair; historical renames below are already present. Replay keeps current paths.\n",

@@ -114,7 +114,9 @@ fn rewrite(
   tree : DocTree,
   moves : Array[Move],
   profile : Profile,
+  targets? : Array[Move],
 ) -> (Entry, Array[Edit]) raise MoveError {
+  let target_moves = targets.unwrap_or(moves)
   let source = file.text()
   let edits : Array[Edit] = []
   let next_path = moved(file.path, moves)
@@ -169,7 +171,7 @@ fn rewrite(
         offset=dest.first,
       )
     }
-    let new_target = moved(target, moves)
+    let new_target = moved(target, target_moves)
     if !tree.files.any(fn(entry) { under(moved(entry.path, moves), new_target) }) {
       refuse(
         "MissingProjectedTarget",

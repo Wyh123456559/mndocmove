@@ -305,6 +305,26 @@ test "preflight continues across failing documents and recovers after fixes" {
 }
 ```
 
+Replace an obsolete resource's references while retaining both resource files:
+
+```mbt check
+///|
+test "retarget existing resources without removing the old file" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](old.bin)"),
+    @mndocmove.Entry::new("old.bin", b"OLD"),
+    @mndocmove.Entry::new("new.bin", b"NEW"),
+  ])
+  let plan = @mndocmove.plan_retargets(tree, [
+    @mndocmove.Move::new("old.bin", "new.bin"),
+  ])
+  let output = plan.replay(tree)
+  assert_eq(output.get("r.md").unwrap().text(), "[asset](new.bin)")
+  assert_eq(output.get("old.bin").unwrap().data(), b"OLD")
+  assert_eq(plan.restore(output).entries(), tree.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

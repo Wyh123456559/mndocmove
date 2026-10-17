@@ -16,6 +16,8 @@ pub fn plan_moves(DocTree, Array[Move], profile? : Profile) -> MovePlan raise Mo
 
 pub fn plan_relinks(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
 
+pub fn plan_retargets(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
+
 // Errors
 pub(all) suberror MoveError {
   Refused(Diagnostic)
@@ -101,6 +103,7 @@ pub fn MovePlan::profile(Self) -> Profile
 pub fn MovePlan::relinks(Self) -> Array[Move]
 pub fn MovePlan::replay(Self, DocTree) -> DocTree raise MoveError
 pub fn MovePlan::restore(Self, DocTree) -> DocTree raise MoveError
+pub fn MovePlan::retargets(Self) -> Array[Move]
 pub fn MovePlan::review(Self, context? : Int) -> String raise MoveError
 pub fn MovePlan::then_moves(Self, Array[Move], profile? : Profile) -> MoveChain raise MoveError
 pub fn MovePlan::to_json_string(Self) -> String

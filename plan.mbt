@@ -64,6 +64,7 @@ pub fn plan_moves(
       profile,
       moves,
       relinks: [],
+      retargets: [],
       adopted_from: None,
       edits: [],
       result: { files: tree.files.copy(), },
@@ -85,6 +86,7 @@ pub fn plan_moves(
     profile,
     moves,
     relinks: [],
+    retargets: [],
     adopted_from: None,
     edits,
     result: DocTree::new(output),
@@ -110,7 +112,9 @@ pub fn MovePlan::preview(self : MovePlan) -> String {
   })
   let value : Json = [
     Json(
-      if self.adopted_from is Some(_) {
+      if !self.retargets.is_empty() {
+        "mndocmove-retarget-preview"
+      } else if self.adopted_from is Some(_) {
         "mndocmove-adopt-preview"
       } else if self.relinks.is_empty() {
         "mndocmove-preview"

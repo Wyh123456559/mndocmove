@@ -63,6 +63,11 @@ This repository has not yet been published to Mooncakes.
   `MoveAudit::plan()` yields the complete ordinary plan; blocked audits yield
   none. CLI: `audit ROOT MOVES_JSON [--static-html]`.
   See [batch preflight, limits and offline demo](docs/audit.md).
+- `plan_retargets(tree, pairs)`: update references between existing files while
+  retaining every path and old resource. `retargets()` records substitutions;
+  saved review/replay/restore and first-stage chains remain available.
+  CLI: `retarget ROOT PAIRS_JSON NEW_PLAN [--static-html]`.
+  See [reference replacement workflow](docs/retarget.md).
 - `Profile::StaticHtml` via `plan_moves(tree,moves,profile=StaticHtml)`: explicit
   support for quoted `<a href>` / `<img src>`, responsive image candidates and
   embedded video/audio/poster/caption resources in Markdown. The default
@@ -265,6 +270,8 @@ moon run scripts/git-e2e.mbtx -- wasm
 moon run scripts/git-e2e.mbtx -- native
 moon run scripts/audit-e2e.mbtx -- wasm
 moon run scripts/audit-e2e.mbtx -- native
+moon run scripts/retarget-e2e.mbtx -- wasm
+moon run scripts/retarget-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

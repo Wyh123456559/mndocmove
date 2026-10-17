@@ -2,7 +2,9 @@
 // Derive the physical intermediate tree from a pending plan's exact baseline.
 // Ownership is known per original file, even when destination prefixes overlap.
 fn MovePlan::renamed_input(self : MovePlan) -> DocTree raise MoveError {
-  if !self.relinks.is_empty() || self.adopted_from is Some(_) {
+  if !self.relinks.is_empty() ||
+    !self.retargets.is_empty() ||
+    self.adopted_from is Some(_) {
     refuse(
       "AdoptPlanKind", "", "Use the original pending move plan; repair/adopted plans already describe current paths",
     )
@@ -49,6 +51,7 @@ fn MovePlan::adopt_verified(self : MovePlan, current : DocTree) -> MovePlan {
     profile: self.profile,
     moves: [],
     relinks: self.moves,
+    retargets: [],
     adopted_from: Some(self.original),
     edits,
     result: self.result,

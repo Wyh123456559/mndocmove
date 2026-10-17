@@ -90,6 +90,10 @@ structural validation, one exact content diagnostic per failing document,
 complete-plan gating and a read-only CLI workflow through fixing errors,
 review, verified export and exact restoration.
 
+Implemented seventeenth capability: simultaneous existing-file reference
+substitution, retaining all old/new files, with distinct saved intent,
+guarded replay/restore and composition with later physical moves.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

@@ -1,0 +1,99 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n")
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-retarget-")
+  let root = tmp + "/docs"
+  @fs.mkdir(root)
+  @fs.mkdir(root + "/new")
+  let fixture = "examples/vscode/tree"
+  let original = @fs.read_file(fixture + "/README.md").text()
+  let asset = @fs.read_file(fixture + "/example.mjs").binary()
+  let replacement = "// Replacement marker\n" +
+    @fs.read_file(fixture + "/example.mjs").text()
+  @fs.write_file(root + "/README.md", original)
+  @fs.write_file(root + "/example.mjs", asset)
+  @fs.write_file(root + "/new/example.mjs", replacement)
+  let pairs = tmp + "/pairs.json"
+  @fs.write_file(pairs, "[[\"example.mjs\",\"new/example.mjs\"]]")
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let plan = tmp + "/plan.json"
+  ignore(capture(prefix + ["retarget", root, pairs, plan], 0))
+  let saved = @fs.read_file(plan).binary()
+  ignore(capture(prefix + ["retarget", root, pairs, plan], 1))
+  assert_eq(@fs.read_file(plan).binary(), saved)
+  ignore(capture(prefix + ["retarget", root, pairs, root + "/inside.json"], 1))
+  assert_true(!@fs.exists(root + "/inside.json"))
+  let review = capture(prefix + ["review", plan], 0)
+  assert_true(
+    review.contains("retarget \"example.mjs\" -> \"new/example.mjs\""),
+  )
+  assert_true(!review.contains("\nmove "))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  assert_eq(
+    @fs.read_file(output + "/README.md").text(),
+    original.replace(old="(./example.mjs)", new="(new/example.mjs)"),
+  )
+  assert_eq(@fs.read_file(output + "/example.mjs").binary(), asset)
+  assert_eq(@fs.read_file(output + "/new/example.mjs").text(), replacement)
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  for name in ["README.md", "example.mjs", "new/example.mjs"] {
+    assert_eq(
+      @fs.read_file(restored + "/" + name).binary(),
+      @fs.read_file(root + "/" + name).binary(),
+    )
+  }
+  @fs.write_file(
+    root + "/example.mjs",
+    "later edit",
+    create_mode=TruncateExisting,
+  )
+  assert_true(
+    capture(prefix + ["replay", root, plan, tmp + "/stale"], 1).contains(
+      "StaleSnapshot",
+    ),
+  )
+  assert_true(!@fs.exists(tmp + "/stale"))
+  assert_eq(@fs.read_file(root + "/example.mjs").text(), "later edit")
+  assert_eq(@fs.read_file(fixture + "/README.md").text(), original)
+  assert_eq(@fs.read_file(fixture + "/example.mjs").binary(), asset)
+  println(
+    "Reference retarget E2E passed: " +
+    target +
+    "; real README, old/new asset preservation, saved review/replay/check/restore, exclusive output and stale-input refusal. Files retained: " +
+    tmp,
+  )
+}

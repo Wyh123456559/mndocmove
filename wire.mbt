@@ -110,7 +110,9 @@ fn decode_moves(value : Json) -> Array[Move] raise MoveError {
 ///|
 // Keep historical repair intent distinct from pending migration operations.
 fn MovePlan::wire_magic(self : MovePlan) -> String {
-  if self.adopted_from is Some(_) {
+  if !self.retargets.is_empty() {
+    "mndocmove-retarget"
+  } else if self.adopted_from is Some(_) {
     "mndocmove-adopt"
   } else if self.relinks.is_empty() {
     "mndocmove"
@@ -121,7 +123,9 @@ fn MovePlan::wire_magic(self : MovePlan) -> String {
 
 ///|
 fn MovePlan::wire_intentions(self : MovePlan) -> Array[Move] {
-  if self.relinks.is_empty() {
+  if !self.retargets.is_empty() {
+    self.retargets
+  } else if self.relinks.is_empty() {
     self.moves
   } else {
     self.relinks
@@ -191,7 +195,8 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
     [String(magic), Number(1, ..), String(profile_name), Array(files), moves] => {
       if magic != "mndocmove" &&
         magic != "mndocmove-relink" &&
-        magic != "mndocmove-adopt" {
+        magic != "mndocmove-adopt" &&
+        magic != "mndocmove-retarget" {
         refuse(
           "InvalidPlan", "", "Unknown plan schema; use a supported migration, relink or adopted plan",
         )
@@ -213,7 +218,9 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
       }
       let tree = DocTree::new(entries)
       let intentions = decode_moves(moves)
-      if magic == "mndocmove-relink" {
+      if magic == "mndocmove-retarget" {
+        plan_retargets(tree, intentions, profile~)
+      } else if magic == "mndocmove-relink" {
         plan_relinks(tree, intentions, profile~)
       } else if magic == "mndocmove-adopt" {
         let pending = plan_moves(tree, intentions, profile~)
