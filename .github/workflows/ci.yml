@@ -29,6 +29,7 @@ jobs:
       - run: moon fmt --check scripts/retarget-e2e.mbtx
       - run: moon fmt --check scripts/rooted-e2e.mbtx
       - run: moon fmt --check scripts/incoming-e2e.mbtx
+      - run: moon fmt --check scripts/anchors-e2e.mbtx
       - run: moon info
       - run: git diff --exit-code -- '*.mbti'
       - run: moon check --target wasm --deny-warn
@@ -60,3 +61,5 @@ jobs:
       - run: moon run scripts/rooted-e2e.mbtx -- native
       - run: moon run scripts/incoming-e2e.mbtx -- wasm
       - run: moon run scripts/incoming-e2e.mbtx -- native
+      - run: moon run scripts/anchors-e2e.mbtx -- wasm
+      - run: moon run scripts/anchors-e2e.mbtx -- native

@@ -65,6 +65,7 @@ pub fn plan_retargets(
     moves: [],
     relinks: [],
     retargets: targets,
+    anchors: [],
     adopted_from: None,
     edits,
     result: DocTree::new(output),

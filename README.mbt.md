@@ -1,7 +1,30 @@
 # Library quick start
 
-Import `Wyh123456559/mndocmove` as `@mndocmove`. This example is executed by
-`moon test`; see [README](README.md) for the real filesystem workflow.
+Import `Wyh123456559/mndocmove` as `@mndocmove`. These examples are executed by
+`moon test`; see [README](README.md) for the real filesystem workflows.
+
+Explicitly consolidate one section while preserving both pages:
+
+```mbt check
+///|
+test "reassign a section then restore its exact original references" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("old.md", "# Old\n[self](#old)"),
+    @mndocmove.Entry::markdown("manual/new.md", "# New\n"),
+  ])
+  let mappings = @mndocmove.anchor_retargets_from_json(
+    "[[\"old.md\",\"old\",\"manual/new.md\",\"new\"]]",
+  )
+  let plan = @mndocmove.plan_anchor_retargets(tree, mappings)
+  let saved = @mndocmove.MovePlan::from_json_string(plan.to_json_string())
+  let result = saved.replay(tree)
+  assert_eq(
+    result.get("old.md").unwrap().text(),
+    "# Old\n[self](manual/new.md#new)",
+  )
+  assert_eq(saved.restore(result).entries(), tree.entries())
+}
+```
 
 ```mbt check
 ///|

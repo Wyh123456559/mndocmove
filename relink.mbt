@@ -95,6 +95,7 @@ pub fn plan_relinks(
     moves: [],
     relinks: forward.moves,
     retargets: [],
+    anchors: [],
     adopted_from: None,
     edits,
     result: forward.result,

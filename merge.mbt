@@ -7,6 +7,11 @@ pub fn MovePlan::merge(
   self : MovePlan,
   other : MovePlan,
 ) -> MovePlan raise MoveError {
+  if !self.anchors.is_empty() || !other.anchors.is_empty() {
+    refuse(
+      "MergeAnchors", "", "Parallel merge accepts file-move plans only; start an ordered chain after anchor retargeting",
+    )
+  }
   if !self.retargets.is_empty() || !other.retargets.is_empty() {
     refuse(
       "MergeRetarget", "", "Parallel merge accepts file-move plans only; start an ordered chain after retargeting",

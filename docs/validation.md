@@ -13,10 +13,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 176/176 tests; incoming query/migration/restore CLI E2E passed |
-| Windows x86-64, Wasm-GC | strict check passed | 169/169 tests |
-| Windows x86-64, JS / Node | strict check passed | 169/169 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 176/176 tests; incoming query/migration/restore CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 186/186 tests; all eleven CLI E2E scripts passed |
+| Windows x86-64, Wasm-GC | strict check passed | 179/179 tests |
+| Windows x86-64, JS / Node | strict check passed | 179/179 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 186/186 tests; explicit anchor query/review/export/restore CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -85,6 +85,9 @@ The explicit-root-profile head `3394a79` passed the complete three-OS workflow:
 The SARIF head `92672e6` passed all three OS runners and nine E2E scripts on
 both CLI targets:
 [GitHub Actions run 39026582367](https://github.com/Wyh123456559/mndocmove/actions/runs/39026582367).
+The incoming-query head `68b7f8c` passed all three OS runners and ten E2E scripts
+on both CLI targets:
+[GitHub Actions run 39034865451](https://github.com/Wyh123456559/mndocmove/actions/runs/39034865451).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -315,6 +318,24 @@ failure. The new real Microsoft fixture E2E checks raw source ranges, readonly
 queries, migration/re-query and exact restoration on Wasm and native. Existing
 planner/wire behavior is unchanged; the CI matrix now runs ten E2E scripts per
 OS/CLI target. No new dependency, downloaded fixture or copied external code.
+
+Explicit anchor substitutions add eight black-box cases, an exact chain wire-size
+case and a tested README example. They cover same-file fragment-only changes,
+cross-file consolidation, root/static-HTML/reference-definition/asset URLs,
+decoded slash/Unicode/hash IDs, query/BOM/CRLF/source-span preservation,
+unselected data, simultaneous cycles/chains/many-to-one substitutions, copied
+intent arrays, deterministic saved plans, strict tuple/profile/version checks,
+4096/4097 mapping and fragment boundaries, expansion beyond the 1-MiB output
+budget, failure recovery, source/result guards and exact restoration. Anchor
+rewrites check output byte size before constructing/reparsing expanded Markdown.
+Ordinary migration/audit error classification and existing encoded plans remain
+unchanged; all eleven Wasm E2E scripts were rerun after shared span application
+was extracted without changing its behavior.
+The new offline five-file fixture also ran as actual WSL native CLI processes.
+CI now runs eleven E2E scripts on both CLI targets per OS; the current head
+must pass its own remote run. No heading inference or anchor-existence check is
+claimed. No external implementation/test code, new downloaded fixture or new
+dependency is included; existing MIT fixture provenance remains in THIRD_PARTY.md.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

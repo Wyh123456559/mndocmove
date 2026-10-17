@@ -172,6 +172,7 @@ struct MovePlan {
   moves : Array[Move]
   relinks : Array[Move]
   retargets : Array[Move]
+  anchors : Array[AnchorRetarget]
   adopted_from : DocTree?
   edits : Array[Edit]
   result : DocTree

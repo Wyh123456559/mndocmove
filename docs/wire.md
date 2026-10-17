@@ -27,7 +27,14 @@ Existing-file substitutions use `mndocmove-retarget` version 1 with input files
 and replacement pairs, recomputed by `plan_retargets` on loading. These are not
 physical moves; chains accept the form as their first plan. See [retargeting](retarget.md).
 
-Full plan:
+Explicit anchor substitutions use `mndocmove-anchors` version 1 with input files
+and four-string tuples `[source_file,decoded_fragment,destination_file,decoded_replacement]`.
+The planner validates declarations and recomputes every edit on loading.
+The preview uses `mndocmove-anchors-preview`. Empty intentions canonicalize to
+ordinary no-op plans; chains accept anchor substitutions as their first plan
+with exact four-field wire preflight. See [anchor contract](anchors.md).
+
+Full move plan:
 
 ```json
 ["mndocmove",1,"commonmark",[["r.md","4869"]],[["r.md","s.md"]]]

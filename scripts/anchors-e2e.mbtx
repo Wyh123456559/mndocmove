@@ -1,0 +1,122 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n").trim().to_owned()
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-anchors-")
+  let root = tmp + "/docs"
+  @fs.mkdir(root)
+  @fs.mkdir(root + "/manual")
+  // Verbatim MIT fixtures plus authored consolidation documents.
+  let original = @fs.read_file("examples/vscode/tree/README.md").binary()
+  let asset = @fs.read_file("examples/vscode/tree/example.mjs").binary()
+  let old = "\uFEFF# Old 😀\r\n[self](#old)\r\n"
+  let next = "# New\n"
+  let index = "[guide](old.md?q=1&amp;x=2#old) [whole page](old.md)\n"
+  @fs.write_file(root + "/README.md", original)
+  @fs.write_file(root + "/example.mjs", asset)
+  @fs.write_file(root + "/old.md", old)
+  @fs.write_file(root + "/manual/new.md", next)
+  @fs.write_file(root + "/index.md", index)
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let before = capture(prefix + ["incoming", root, "old.md"], 0)
+  assert_true(before.contains("#old"))
+  let pairs = tmp + "/anchors.json"
+  @fs.write_file(pairs, "[[\"old.md\",\"old\",\"manual/new.md\",\"new\"]]")
+  let plan = tmp + "/plan.json"
+  let preview = capture(prefix + ["retarget-anchors", root, pairs, plan], 0)
+  assert_true(preview.has_prefix("[\"mndocmove-anchors-preview\",1,"))
+  let saved = @fs.read_file(plan).binary()
+  let review = capture(prefix + ["review", plan], 0)
+  assert_true(
+    review.contains(
+      "retarget-anchor \"old.md\" \"old\" -> \"manual/new.md\" \"new\"",
+    ),
+  )
+  assert_true(!review.contains("\nmove "))
+  ignore(capture(prefix + ["retarget-anchors", root, pairs, plan], 1))
+  assert_eq(@fs.read_file(plan).binary(), saved)
+  ignore(
+    capture(
+      prefix + ["retarget-anchors", root, pairs, root + "/inside.json"],
+      1,
+    ),
+  )
+  assert_true(!@fs.exists(root + "/inside.json"))
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  assert_eq(
+    @fs.read_file(output + "/old.md").text(),
+    "\uFEFF# Old 😀\r\n[self](manual/new.md#new)\r\n",
+  )
+  assert_eq(
+    @fs.read_file(output + "/index.md").text(),
+    "[guide](manual/new.md?q=1&amp;x=2#new) [whole page](old.md)\n",
+  )
+  assert_eq(@fs.read_file(output + "/manual/new.md").text(), next)
+  assert_eq(@fs.read_file(output + "/README.md").binary(), original)
+  assert_eq(@fs.read_file(output + "/example.mjs").binary(), asset)
+  let after = capture(prefix + ["incoming", output, "manual/new.md"], 0)
+  match @json.parse(after) {
+    [String("mndocmove-incoming"), Number(1, ..), _, _, _, Array(rows)] => {
+      assert_eq(rows.length(), 2)
+      for row in rows {
+        guard row is [_, _, _, _, _, String("manual/new.md"), String("new")] else {
+          fail("Wrong anchor identity")
+        }
+      }
+    }
+    _ => fail("Invalid incoming report")
+  }
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  for dir in [root, restored] {
+    assert_eq(@fs.read_file(dir + "/old.md").text(), old)
+    assert_eq(@fs.read_file(dir + "/manual/new.md").text(), next)
+    assert_eq(@fs.read_file(dir + "/index.md").text(), index)
+    assert_eq(@fs.read_file(dir + "/README.md").binary(), original)
+    assert_eq(@fs.read_file(dir + "/example.mjs").binary(), asset)
+  }
+  @fs.write_file(output + "/manual/new.md", "Edited\n")
+  ignore(
+    capture(prefix + ["restore", output, plan, tmp + "/unsafe-restore"], 1),
+  )
+  assert_true(!@fs.exists(tmp + "/unsafe-restore"))
+  println(
+    "Anchor retarget E2E passed: " +
+    target +
+    "; real README, explicit consolidation, exact preservation/restoration, incoming queries and saved-plan guards. Files retained: " +
+    tmp,
+  )
+}

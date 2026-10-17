@@ -280,6 +280,26 @@ async fn save_retargets(
 }
 
 ///|
+async fn save_anchors(
+  root : String,
+  pairs : String,
+  output : String,
+  profile : @lib.Profile,
+) -> Unit {
+  let plan = @lib.plan_anchor_retargets(
+    read_tree(root),
+    @lib.anchor_retargets_from_json(read_text(pairs)),
+    profile~,
+  )
+  @fs.write_file(
+    outside_path(root, output),
+    plan.to_json_string(),
+    create_mode=CreateNew,
+  )
+  println(plan.preview())
+}
+
+///|
 fn named_profile(name : String) -> @lib.Profile raise {
   match name {
     "commonmark" => CommonMark
@@ -377,6 +397,10 @@ pub async fn run(args : Array[String]) -> Int32 {
         save_moves(root, moves, output, named_profile(name))
       ["retarget", root, pairs, output, "--profile", name] =>
         save_retargets(root, pairs, output, named_profile(name))
+      ["retarget-anchors", root, pairs, output] =>
+        save_anchors(root, pairs, output, CommonMark)
+      ["retarget-anchors", root, pairs, output, "--profile", name] =>
+        save_anchors(root, pairs, output, named_profile(name))
       ["relink", root, moves, output, "--profile", name] =>
         save_relinks(
           root,
@@ -542,6 +566,9 @@ pub async fn run(args : Array[String]) -> Int32 {
         )
         println(
           "       mndocmove incoming ROOT TARGET [--recursive] [--profile NAME]",
+        )
+        println(
+          "       mndocmove retarget-anchors ROOT MAP_JSON NEW_PLAN_JSON [--profile NAME]",
         )
         return 2
       }

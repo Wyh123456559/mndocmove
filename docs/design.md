@@ -106,6 +106,11 @@ Implemented twentieth capability: complete incoming local destination queries,
 with exact source spans, decoded fragment identities, recursive target scope,
 bounded reports and a read-only migration/re-query/restore workflow.
 
+Implemented twenty-first capability: explicit file/fragment substitutions,
+including fragment-only URLs and opaque asset identifiers, with one-hop
+semantics, retained files, strict saved intentions, review/replay/restore and
+composition with later physical moves.
+
 Later work, not implemented: site-route/extension inference, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

@@ -3,6 +3,7 @@
 // Ownership is known per original file, even when destination prefixes overlap.
 fn MovePlan::renamed_input(self : MovePlan) -> DocTree raise MoveError {
   if !self.relinks.is_empty() ||
+    !self.anchors.is_empty() ||
     !self.retargets.is_empty() ||
     self.adopted_from is Some(_) {
     refuse(
@@ -52,6 +53,7 @@ fn MovePlan::adopt_verified(self : MovePlan, current : DocTree) -> MovePlan {
     moves: [],
     relinks: self.moves,
     retargets: [],
+    anchors: [],
     adopted_from: Some(self.original),
     edits,
     result: self.result,

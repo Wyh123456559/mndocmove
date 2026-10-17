@@ -230,6 +230,19 @@ fn rewrite(
       new_target,
     })
   }
+  finish_rewrite(file, profile, edits, expected, next_path)
+}
+
+///|
+// Apply only verified destination spans and reparse before accepting output.
+fn finish_rewrite(
+  file : Entry,
+  profile : Profile,
+  edits : Array[Edit],
+  expected : Array[String],
+  next_path : String,
+) -> (Entry, Array[Edit]) raise MoveError {
+  let source = file.text()
   let output = StringBuilder()
   let mut offset = 0
   for edit in edits {

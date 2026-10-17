@@ -76,6 +76,11 @@ This repository has not yet been published to Mooncakes.
   saved review/replay/restore and first-stage chains remain available.
   CLI: `retarget ROOT PAIRS_JSON NEW_PLAN [--static-html]`.
   See [reference replacement workflow](docs/retarget.md).
+- `plan_anchor_retargets(tree, mappings)`: replace explicitly named file/fragment
+  references, including fragment-only links, while retaining every file. Use
+  decoded identifiers in `AnchorRetarget` or strict four-string tuples through
+  `anchor_retargets_from_json`. CLI: `retarget-anchors ROOT MAP_JSON NEW_PLAN
+  [--profile NAME]`. See [anchor migration workflow](docs/anchors.md).
 - `Profile::StaticHtml` via `plan_moves(tree,moves,profile=StaticHtml)`: explicit
   support for quoted `<a href>` / `<img src>`, responsive image candidates and
   embedded video/audio/poster/caption resources in Markdown. The default
@@ -288,6 +293,8 @@ moon run scripts/rooted-e2e.mbtx -- wasm
 moon run scripts/rooted-e2e.mbtx -- native
 moon run scripts/incoming-e2e.mbtx -- wasm
 moon run scripts/incoming-e2e.mbtx -- native
+moon run scripts/anchors-e2e.mbtx -- wasm
+moon run scripts/anchors-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

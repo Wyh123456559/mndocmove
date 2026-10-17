@@ -35,6 +35,25 @@ fn moves_wire_units(moves : Array[Move]) -> Int64 {
 }
 
 ///|
+fn MovePlan::actions_wire_units(self : MovePlan) -> Int64 {
+  if self.anchors.is_empty() {
+    return moves_wire_units(self.wire_intentions())
+  }
+  let mut units = 2L
+  for i, a in self.anchors {
+    if i > 0 {
+      units += 1
+    }
+    units += 5 +
+      json_string_units(a.source) +
+      json_string_units(a.fragment) +
+      json_string_units(a.destination) +
+      json_string_units(a.replacement)
+  }
+  units
+}
+
+///|
 // Count the exact wire size before allocating hexadecimal snapshot strings.
 // Json measures each small path's escaping; array punctuation is counted here.
 fn MoveChain::wire_units(self : MoveChain) -> Int64 {
@@ -53,7 +72,7 @@ fn MoveChain::wire_units(self : MoveChain) -> Int64 {
     1 +
     json_string_units(profile_name(first.profile)) +
     files +
-    moves_wire_units(first.wire_intentions())
+    first.actions_wire_units()
   let mut steps = 2L
   for i in 1..<self.plans.length() {
     if i > 1 {

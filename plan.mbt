@@ -65,6 +65,7 @@ pub fn plan_moves(
       moves,
       relinks: [],
       retargets: [],
+      anchors: [],
       adopted_from: None,
       edits: [],
       result: { files: tree.files.copy(), },
@@ -87,6 +88,7 @@ pub fn plan_moves(
     moves,
     relinks: [],
     retargets: [],
+    anchors: [],
     adopted_from: None,
     edits,
     result: DocTree::new(output),
@@ -96,9 +98,7 @@ pub fn plan_moves(
 ///|
 /// Deterministic derived preview. Preserve the full plan for replay.
 pub fn MovePlan::preview(self : MovePlan) -> String {
-  let moves : Array[Json] = self
-    .wire_intentions()
-    .map(fn(change) { [Json(change.source), Json(change.destination)] })
+  let moves = self.wire_actions()
   let edits : Array[Json] = self.edits.map(fn(e) {
     [
       Json(e.path),
@@ -112,7 +112,9 @@ pub fn MovePlan::preview(self : MovePlan) -> String {
   })
   let value : Json = [
     Json(
-      if !self.retargets.is_empty() {
+      if !self.anchors.is_empty() {
+        "mndocmove-anchors-preview"
+      } else if !self.retargets.is_empty() {
         "mndocmove-retarget-preview"
       } else if self.adopted_from is Some(_) {
         "mndocmove-adopt-preview"

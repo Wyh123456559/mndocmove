@@ -262,6 +262,24 @@ pub fn MovePlan::review(
       "Verified move adoption: input paths and every byte match the saved baseline after physical renames.\n",
     )
   }
+  if !self.anchors.is_empty() {
+    out.write_string(
+      "Anchor reference retargeting; every file remains at its original path.\n",
+    )
+    for a in self.anchors {
+      out.write_string(
+        "retarget-anchor " +
+        review_path(a.source) +
+        " " +
+        review_path(a.fragment) +
+        " -> " +
+        review_path(a.destination) +
+        " " +
+        review_path(a.replacement) +
+        "\n",
+      )
+    }
+  }
   if !self.retargets.is_empty() {
     out.write_string(
       "Reference retargeting; every file remains at its original path.\n",

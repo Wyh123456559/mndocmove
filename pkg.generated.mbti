@@ -6,11 +6,15 @@ import {
 }
 
 // Values
+pub fn anchor_retargets_from_json(String) -> Array[AnchorRetarget] raise MoveError
+
 pub fn audit_moves(DocTree, Array[Move], profile? : Profile) -> MoveAudit raise MoveError
 
 pub fn moves_from_git_name_status(Bytes, root_prefix? : String) -> Array[Move] raise MoveError
 
 pub fn moves_from_json(String) -> Array[Move] raise MoveError
+
+pub fn plan_anchor_retargets(DocTree, Array[AnchorRetarget], profile? : Profile) -> MovePlan raise MoveError
 
 pub fn plan_moves(DocTree, Array[Move], profile? : Profile) -> MovePlan raise MoveError
 
@@ -25,6 +29,16 @@ pub(all) suberror MoveError {
 pub fn MoveError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) struct AnchorRetarget {
+  source : String
+  fragment : String
+  destination : String
+  replacement : String
+} derive(Eq, @debug.Debug)
+pub fn AnchorRetarget::equal(Self, Self) -> Bool
+pub fn AnchorRetarget::not_equal(Self, Self) -> Bool
+pub fn AnchorRetarget::to_repr(Self) -> @debug.Repr
+
 pub(all) struct Diagnostic {
   code : String
   path : String
@@ -99,6 +113,7 @@ pub fn MoveChain::to_repr(Self) -> @debug.Repr
 
 type MovePlan derive(@debug.Debug)
 pub fn MovePlan::adopt(Self, DocTree) -> Self raise MoveError
+pub fn MovePlan::anchor_retargets(Self) -> Array[AnchorRetarget]
 pub fn MovePlan::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport
 pub fn MovePlan::check_renamed(Self, DocTree) -> SnapshotReport raise MoveError
 pub fn MovePlan::edits(Self) -> Array[Edit]

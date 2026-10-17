@@ -110,7 +110,9 @@ fn decode_moves(value : Json) -> Array[Move] raise MoveError {
 ///|
 // Keep historical repair intent distinct from pending migration operations.
 fn MovePlan::wire_magic(self : MovePlan) -> String {
-  if !self.retargets.is_empty() {
+  if !self.anchors.is_empty() {
+    "mndocmove-anchors"
+  } else if !self.retargets.is_empty() {
     "mndocmove-retarget"
   } else if self.adopted_from is Some(_) {
     "mndocmove-adopt"
@@ -140,14 +142,28 @@ fn MovePlan::wire_input(self : MovePlan) -> DocTree {
 }
 
 ///|
+fn MovePlan::wire_actions(self : MovePlan) -> Array[Json] {
+  if !self.anchors.is_empty() {
+    self.anchors.map(fn(a) {
+      [
+        Json(a.source),
+        Json(a.fragment),
+        Json(a.destination),
+        Json(a.replacement),
+      ]
+    })
+  } else {
+    self.wire_intentions().map(fn(m) { [Json(m.source), Json(m.destination)] })
+  }
+}
+
+///|
 // Array order and uppercase hex make the full input snapshot deterministic.
 fn MovePlan::wire_json(self : MovePlan) -> Json {
   let files : Array[Json] = self.wire_input().files.map(fn(e) {
     [Json(e.path), Json(hex_bytes(e.data))]
   })
-  let moves : Array[Json] = self
-    .wire_intentions()
-    .map(fn(m) { [Json(m.source), Json(m.destination)] })
+  let moves = self.wire_actions()
   let value : Json = [
     Json(self.wire_magic()),
     1,
@@ -193,9 +209,10 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
       if magic != "mndocmove" &&
         magic != "mndocmove-relink" &&
         magic != "mndocmove-adopt" &&
+        magic != "mndocmove-anchors" &&
         magic != "mndocmove-retarget" {
         refuse(
-          "InvalidPlan", "", "Unknown plan schema; use a supported migration, relink or adopted plan",
+          "InvalidPlan", "", "Unknown plan schema; see docs/wire.md for supported migration and reference-repair plans",
         )
       }
       let profile = wire_profile(profile_name)
@@ -214,6 +231,9 @@ fn decode_plan(value : Json) -> MovePlan raise MoveError {
         }
       }
       let tree = DocTree::new(entries)
+      if magic == "mndocmove-anchors" {
+        return plan_anchor_retargets(tree, decode_anchors(moves), profile~)
+      }
       let intentions = decode_moves(moves)
       if magic == "mndocmove-retarget" {
         plan_retargets(tree, intentions, profile~)
