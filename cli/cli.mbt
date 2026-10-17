@@ -351,6 +351,24 @@ async fn audit_sarif(
 pub async fn run(args : Array[String]) -> Int32 {
   try {
     match args[:] {
+      ["incoming", root, target] =>
+        println(read_tree(root).incoming(target).to_json_string())
+      ["incoming", root, target, "--recursive"] =>
+        println(
+          read_tree(root).incoming(target, recursive=true).to_json_string(),
+        )
+      ["incoming", root, target, "--profile", name] =>
+        println(
+          read_tree(root)
+          .incoming(target, profile=named_profile(name))
+          .to_json_string(),
+        )
+      ["incoming", root, target, "--recursive", "--profile", name] =>
+        println(
+          read_tree(root)
+          .incoming(target, recursive=true, profile=named_profile(name))
+          .to_json_string(),
+        )
       ["audit-sarif", root, moves, prefix, output] =>
         return audit_sarif(root, moves, prefix, output, CommonMark)
       ["audit-sarif", root, moves, prefix, output, "--profile", name] =>
@@ -521,6 +539,9 @@ pub async fn run(args : Array[String]) -> Int32 {
         )
         println(
           "       mndocmove audit-sarif ROOT MOVES_JSON ROOT_PREFIX NEW_SARIF [--profile NAME]",
+        )
+        println(
+          "       mndocmove incoming ROOT TARGET [--recursive] [--profile NAME]",
         )
         return 2
       }

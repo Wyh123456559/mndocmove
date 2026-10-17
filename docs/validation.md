@@ -13,10 +13,10 @@ Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 169/169 tests; all nine E2E scripts passed |
-| Windows x86-64, Wasm-GC | strict check passed | 162/162 tests |
-| Windows x86-64, JS / Node | strict check passed | 162/162 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 169/169 tests; SARIF audit/fix/export/restore CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 176/176 tests; incoming query/migration/restore CLI E2E passed |
+| Windows x86-64, Wasm-GC | strict check passed | 169/169 tests |
+| Windows x86-64, JS / Node | strict check passed | 169/169 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 176/176 tests; incoming query/migration/restore CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -82,6 +82,9 @@ The reference-retarget head `1c2e476` passed the complete three-OS workflow:
 [GitHub Actions run 39025418251](https://github.com/Wyh123456559/mndocmove/actions/runs/39025418251).
 The explicit-root-profile head `3394a79` passed the complete three-OS workflow:
 [GitHub Actions run 39025730123](https://github.com/Wyh123456559/mndocmove/actions/runs/39025730123).
+The SARIF head `92672e6` passed all three OS runners and nine E2E scripts on
+both CLI targets:
+[GitHub Actions run 39026582367](https://github.com/Wyh123456559/mndocmove/actions/runs/39026582367).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -301,6 +304,17 @@ Neither the schema nor validator/dependencies are bundled or required by the
 module/CI. Schema validation is not evidence of hosted GitHub ingestion or
 viewer rendering, which were not exercised. Source/license references are
 recorded in THIRD_PARTY.md, with no external implementation/tests copied.
+
+Incoming reference queries add six black-box cases and a tested README example.
+They cover destination/definition spans, BOM/CRLF/emoji/entity/percent spelling,
+fragment/query-only/empty destinations, exact-vs-recursive/root selectors,
+explicit HTML/rooted media profiles, malformed/incomplete/unsafe inputs,
+4096/4097 fragment units, caller budget acceptance/refusal, copied arrays,
+deterministic JSON and report/plan separation. No partial report escapes a
+failure. The new real Microsoft fixture E2E checks raw source ranges, readonly
+queries, migration/re-query and exact restoration on Wasm and native. Existing
+planner/wire behavior is unchanged; the CI matrix now runs ten E2E scripts per
+OS/CLI target. No new dependency, downloaded fixture or copied external code.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.

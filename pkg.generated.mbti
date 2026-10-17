@@ -38,6 +38,7 @@ pub fn Diagnostic::to_repr(Self) -> @debug.Repr
 type DocTree derive(@debug.Debug)
 pub fn DocTree::entries(Self) -> Array[Entry]
 pub fn DocTree::get(Self, String) -> Entry?
+pub fn DocTree::incoming(Self, String, recursive? : Bool, profile? : Profile, max_references? : Int) -> IncomingReferences raise MoveError
 pub fn DocTree::new(Array[Entry]) -> Self raise MoveError
 pub fn DocTree::to_repr(Self) -> @debug.Repr
 
@@ -63,6 +64,11 @@ pub fn Entry::not_equal(Self, Self) -> Bool
 pub fn Entry::path(Self) -> String
 pub fn Entry::text(Self) -> String raise MoveError
 pub fn Entry::to_repr(Self) -> @debug.Repr
+
+type IncomingReferences derive(@debug.Debug)
+pub fn IncomingReferences::references(Self) -> Array[Reference]
+pub fn IncomingReferences::to_json_string(Self) -> String
+pub fn IncomingReferences::to_repr(Self) -> @debug.Repr
 
 type Move derive(Eq, @debug.Debug)
 pub fn Move::destination(Self) -> String
@@ -117,6 +123,19 @@ pub(all) enum Profile {
   StaticHtmlRoot
 } derive(@debug.Debug)
 pub fn Profile::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Reference {
+  path : String
+  start : Int
+  end : Int
+  raw : String
+  url : String
+  target : String
+  fragment : String?
+} derive(Eq, @debug.Debug)
+pub fn Reference::equal(Self, Self) -> Bool
+pub fn Reference::not_equal(Self, Self) -> Bool
+pub fn Reference::to_repr(Self) -> @debug.Repr
 
 pub(all) enum SnapshotChange {
   Added(String, Int)

@@ -1,0 +1,110 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n").trim().to_owned()
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-incoming-")
+  let root = tmp + "/docs"
+  @fs.mkdir(root)
+  let original = @fs.read_file("examples/vscode/tree/README.md").binary()
+  let asset = @fs.read_file("examples/vscode/tree/example.mjs").binary()
+  let authored = "\uFEFF😀 [sample](example.mjs#start)\r\n"
+  @fs.write_file(root + "/README.md", original)
+  @fs.write_file(root + "/example.mjs", asset)
+  @fs.write_file(root + "/r.md", authored)
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let report = capture(prefix + ["incoming", root, "example.mjs"], 0)
+  let refs = match @json.parse(report) {
+    [
+      String("mndocmove-incoming"),
+      Number(1, ..),
+      String("commonmark"),
+      String("example.mjs"),
+      False,
+      Array(rows),
+    ] => rows
+    _ => fail("Invalid incoming report")
+  }
+  assert_eq(refs.length(), 2)
+  for row in refs {
+    match row {
+      [
+        String(path),
+        Number(start, ..),
+        Number(end, ..),
+        String(raw),
+        String(_),
+        String("example.mjs"),
+        _,
+      ] =>
+        assert_eq(
+          @fs.read_file(root + "/" + path).text()[start.to_int():end.to_int()].to_owned(),
+          raw,
+        )
+      _ => fail("Invalid source range")
+    }
+  }
+  assert_eq(capture(prefix + ["incoming", root, "example.mjs"], 0), report)
+  ignore(capture(prefix + ["incoming", root, ".", "--recursive"], 0))
+  ignore(capture(prefix + ["incoming", root, "missing"], 1))
+  ignore(capture(prefix + ["incoming", root, "example.mjs", "--unknown"], 2))
+  let report_file = tmp + "/report.json"
+  @fs.write_file(report_file, report)
+  ignore(
+    capture(prefix + ["replay", root, report_file, tmp + "/invalid-export"], 1),
+  )
+  assert_true(!@fs.exists(tmp + "/invalid-export"))
+  let plan = tmp + "/plan.json"
+  ignore(
+    capture(prefix + ["plan", root, "examples/vscode/moves.json", plan], 0),
+  )
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  let after = capture(prefix + ["incoming", output, "samples/example.mjs"], 0)
+  assert_true(after.contains("samples/example.mjs#start"))
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  assert_eq(@fs.read_file(restored + "/README.md").binary(), original)
+  assert_eq(@fs.read_file(restored + "/example.mjs").binary(), asset)
+  assert_eq(@fs.read_file(restored + "/r.md").text(), authored)
+  assert_eq(@fs.read_file(root + "/README.md").binary(), original)
+  assert_eq(@fs.read_file(root + "/example.mjs").binary(), asset)
+  assert_eq(@fs.read_file(root + "/r.md").text(), authored)
+  println(
+    "Incoming reference E2E passed: " +
+    target +
+    "; real README, exact source spans, readonly/deterministic/report guards, migration query and exact restoration. Files retained: " +
+    tmp,
+  )
+}

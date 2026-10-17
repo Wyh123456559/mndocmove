@@ -56,6 +56,10 @@ after it is published, or use a local module dependency while developing.
 This repository has not yet been published to Mooncakes.
 
 - `DocTree::new(Array[Entry])`: bounded, validated immutable snapshot.
+- `DocTree::incoming(target, recursive=false)`: find incoming local URL
+  destination spans before changing a file/directory, including decoded
+  fragments and exact raw source ranges. CLI: `incoming ROOT TARGET
+  [--recursive] [--profile NAME]`. See [reference query workflow](docs/incoming.md).
 - `Move::new(old, new)` and `plan_moves(tree, moves)`: simultaneous file or
   directory-prefix moves, minimal source edits, complete projected inventory.
 - `audit_moves(tree, moves)`: migration preflight that continues after a
@@ -282,6 +286,8 @@ moon run scripts/retarget-e2e.mbtx -- wasm
 moon run scripts/retarget-e2e.mbtx -- native
 moon run scripts/rooted-e2e.mbtx -- wasm
 moon run scripts/rooted-e2e.mbtx -- native
+moon run scripts/incoming-e2e.mbtx -- wasm
+moon run scripts/incoming-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

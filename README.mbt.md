@@ -365,6 +365,22 @@ test "emit SARIF without exposing a partial migration plan" {
 }
 ```
 
+Find the source destinations that reference a resource before changing it:
+
+```mbt check
+///|
+test "find exact incoming source destinations" {
+  let tree = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("r.md", "[asset](a.bin#part)"),
+    @mndocmove.Entry::new("a.bin", b"A"),
+  ])
+  let refs = tree.incoming("a.bin").references()
+  assert_eq(refs.length(), 1)
+  assert_eq(refs[0].raw, "a.bin#part")
+  assert_eq(refs[0].fragment, Some("part"))
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

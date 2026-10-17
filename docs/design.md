@@ -102,6 +102,10 @@ Implemented nineteenth capability: SARIF 2.1.0 preflight reporting with
 retained snapshots, BOM-aware UTF-16 point locations, encoded repository paths,
 complete diagnostic preservation and an exclusive-output CLI workflow.
 
+Implemented twentieth capability: complete incoming local destination queries,
+with exact source spans, decoded fragment identities, recursive target scope,
+bounded reports and a read-only migration/re-query/restore workflow.
+
 Later work, not implemented: site-route/extension inference, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation
