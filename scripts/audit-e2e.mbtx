@@ -1,0 +1,140 @@
+///|
+import {
+  "moonbitlang/async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/process",
+  "moonbitlang/core/env",
+  "moonbitlang/core/json",
+}
+
+///|
+async fn capture(args : Array[String], expected : Int32) -> String {
+  let (code, out, err) = @process.collect_output("moon", args)
+  if code != expected {
+    println(out.text())
+    println(err.text())
+    abort("Unexpected CLI exit")
+  }
+  out.text().replace_all(old="\r\n", new="\n").trim().to_owned()
+}
+
+///|
+async fn main {
+  let target = @env.args().last().unwrap_or("wasm")
+  guard target == "wasm" || target == "native" else {
+    fail("Use wasm or native")
+  }
+  let tmp = @fs.tmpdir(prefix="mndocmove-audit-")
+  let root = tmp + "/docs"
+  @fs.mkdir(root)
+  let fixture = "examples/vscode/tree"
+  let original = @fs.read_file(fixture + "/README.md").binary()
+  let asset = @fs.read_file(fixture + "/example.mjs").binary()
+  @fs.write_file(root + "/README.md", original)
+  @fs.write_file(root + "/example.mjs", asset)
+  @fs.write_file(root + "/a.md", "[x](missing.bin)")
+  @fs.write_file(root + "/b.md", "[[wiki]]")
+  let prefix = [
+    "run",
+    "cmd/main",
+    "--target",
+    target,
+    "--target-dir",
+    tmp + "/build",
+    "--deny-warn",
+    "--",
+  ]
+  let moves = "examples/vscode/moves.json"
+  let blocked = capture(prefix + ["audit", root, moves], 1)
+  let issues = match @json.parse(blocked) {
+    [
+      String("mndocmove-audit"),
+      Number(1, ..),
+      String("blocked"),
+      String("commonmark"),
+      Number(4, ..),
+      Number(3, ..),
+      Array(issues),
+    ] => issues
+    _ => fail("Expected a complete blocked audit report")
+  }
+  assert_eq(issues.length(), 2)
+  assert_true(
+    issues[0]
+    is [String("MissingTarget"), String("a.md"), Number(4, ..), String(_)],
+  )
+  assert_true(
+    issues[1]
+    is [String("UnsupportedMarkdown"), String("b.md"), Number(_, ..), String(_)],
+  )
+  assert_eq(capture(prefix + ["audit", root, moves], 1), blocked)
+  assert_eq(@fs.read_file(root + "/a.md").text(), "[x](missing.bin)")
+  assert_eq(@fs.read_file(root + "/b.md").text(), "[[wiki]]")
+  assert_eq(@fs.readdir(root, sort=true), [
+    "a.md", "b.md", "README.md", "example.mjs",
+  ])
+  let report_file = tmp + "/report.json"
+  @fs.write_file(report_file, blocked)
+  ignore(capture(prefix + ["replay", root, report_file, tmp + "/partial"], 1))
+  assert_true(!@fs.exists(tmp + "/partial"))
+  ignore(capture(prefix + ["audit", root, moves, "--unknown"], 2))
+  @fs.write_file(tmp + "/collision.json", "[[\"README.md\",\"example.mjs\"]]")
+  assert_true(
+    capture(prefix + ["audit", root, tmp + "/collision.json"], 1).contains(
+      "PathCollision",
+    ),
+  )
+  // Explicitly fix both documents. The audit itself never changes source files.
+  @fs.write_file(
+    root + "/a.md",
+    "<a href='example.mjs'>sample</a>\r\n",
+    create_mode=TruncateExisting,
+  )
+  @fs.write_file(
+    root + "/b.md",
+    "[Home](README.md)\n",
+    create_mode=TruncateExisting,
+  )
+  assert_true(
+    capture(prefix + ["audit", root, moves], 1).contains("UnsupportedMarkdown"),
+  )
+  assert_eq(
+    capture(prefix + ["audit", root, moves, "--static-html"], 0),
+    "[\"mndocmove-audit\",1,\"ready\",\"static-html\",4,3,[]]",
+  )
+  let plan = tmp + "/ready.json"
+  ignore(capture(prefix + ["plan", root, moves, plan, "--static-html"], 0))
+  assert_true(
+    capture(prefix + ["review", plan], 0).contains("samples/example.mjs"),
+  )
+  let output = tmp + "/export"
+  ignore(capture(prefix + ["replay", root, plan, output], 0))
+  ignore(capture(prefix + ["check", output, plan, "--result"], 0))
+  assert_eq(
+    @fs.read_file(output + "/a.md").text(),
+    "<a href='samples/example.mjs'>sample</a>\r\n",
+  )
+  assert_eq(
+    @fs.read_file(output + "/b.md").text(),
+    "[Home](manual/README.md)\n",
+  )
+  assert_eq(@fs.read_file(output + "/samples/example.mjs").binary(), asset)
+  let restored = tmp + "/restored"
+  ignore(capture(prefix + ["restore", output, plan, restored], 0))
+  for name in ["README.md", "example.mjs", "a.md", "b.md"] {
+    assert_eq(
+      @fs.read_file(restored + "/" + name).binary(),
+      @fs.read_file(root + "/" + name).binary(),
+    )
+  }
+  assert_eq(@fs.read_file(root + "/README.md").binary(), original)
+  assert_eq(@fs.read_file(root + "/example.mjs").binary(), asset)
+  assert_eq(@fs.read_file(fixture + "/README.md").binary(), original)
+  assert_eq(@fs.read_file(fixture + "/example.mjs").binary(), asset)
+  println(
+    "Migration audit E2E passed: " +
+    target +
+    "; real README, continued per-file diagnostics, readonly/report guards, explicit profile, fixed-source plan/review/export/check/exact restore. Files retained: " +
+    tmp,
+  )
+}

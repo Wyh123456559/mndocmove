@@ -58,6 +58,11 @@ This repository has not yet been published to Mooncakes.
 - `DocTree::new(Array[Entry])`: bounded, validated immutable snapshot.
 - `Move::new(old, new)` and `plan_moves(tree, moves)`: simultaneous file or
   directory-prefix moves, minimal source edits, complete projected inventory.
+- `audit_moves(tree, moves)`: migration preflight that continues after a
+  document's first refusal and returns all failing-file diagnostics. A ready
+  `MoveAudit::plan()` yields the complete ordinary plan; blocked audits yield
+  none. CLI: `audit ROOT MOVES_JSON [--static-html]`.
+  See [batch preflight, limits and offline demo](docs/audit.md).
 - `Profile::StaticHtml` via `plan_moves(tree,moves,profile=StaticHtml)`: explicit
   support for quoted `<a href>` / `<img src>`, responsive image candidates and
   embedded video/audio/poster/caption resources in Markdown. The default
@@ -258,6 +263,8 @@ moon run scripts/merge-e2e.mbtx -- wasm
 moon run scripts/merge-e2e.mbtx -- native
 moon run scripts/git-e2e.mbtx -- wasm
 moon run scripts/git-e2e.mbtx -- native
+moon run scripts/audit-e2e.mbtx -- wasm
+moon run scripts/audit-e2e.mbtx -- native
 ```
 
 The E2E script uses a fresh temporary directory and asserts the exact README

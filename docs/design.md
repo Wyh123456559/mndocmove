@@ -85,6 +85,11 @@ after physical renames, with exact full-inventory drift reporting, baseline
 ownership for merged destinations, compact saved provenance and guarded
 link-only replay/pre-repair restore/ordered-chain workflows.
 
+Implemented sixteenth capability: batch migration preflight with shared
+structural validation, one exact content diagnostic per failing document,
+complete-plan gating and a read-only CLI workflow through fixing errors,
+review, verified export and exact restoration.
+
 Later work, not implemented: carefully specified site-route profiles, editor
 integration and crash-durable filesystem transactions. Each requires its own end-to-end
 workflow, diagnostic rules and regression suite. No automatic Git operation

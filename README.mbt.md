@@ -278,6 +278,33 @@ test "adopt the exact physically renamed snapshot" {
 }
 ```
 
+Find failing documents together before generating a migration:
+
+```mbt check
+///|
+test "preflight continues across failing documents and recovers after fixes" {
+  let broken = @mndocmove.DocTree::new([
+    @mndocmove.Entry::markdown("a.md", "[asset](a.bin)"),
+    @mndocmove.Entry::markdown("b.md", "[asset](a.bin)"),
+  ])
+  let moves = [@mndocmove.Move::new("a.md", "manual/a.md")]
+  let blocked = @mndocmove.audit_moves(broken, moves)
+  assert_eq(blocked.diagnostics().length(), 2)
+  assert_true(blocked.plan() is None)
+  let files = broken.entries()
+  files.push(@mndocmove.Entry::new("a.bin", b"A"))
+  let fixed = @mndocmove.DocTree::new(files)
+  let audit = @mndocmove.audit_moves(fixed, moves)
+  assert_true(audit.is_ready())
+  let plan = audit.plan().unwrap()
+  assert_eq(
+    plan.replay(fixed).get("manual/a.md").unwrap().text(),
+    "[asset](../a.bin)",
+  )
+  assert_eq(plan.restore(plan.replay(fixed)).entries(), fixed.entries())
+}
+```
+
 Inspect all drift before replay or after export:
 
 ```mbt check

@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn audit_moves(DocTree, Array[Move], profile? : Profile) -> MoveAudit raise MoveError
+
 pub fn moves_from_git_name_status(Bytes, root_prefix? : String) -> Array[Move] raise MoveError
 
 pub fn moves_from_json(String) -> Array[Move] raise MoveError
@@ -67,6 +69,13 @@ pub fn Move::new(String, String) -> Self
 pub fn Move::not_equal(Self, Self) -> Bool
 pub fn Move::source(Self) -> String
 pub fn Move::to_repr(Self) -> @debug.Repr
+
+type MoveAudit derive(@debug.Debug)
+pub fn MoveAudit::diagnostics(Self) -> Array[Diagnostic]
+pub fn MoveAudit::is_ready(Self) -> Bool
+pub fn MoveAudit::plan(Self) -> MovePlan?
+pub fn MoveAudit::to_json_string(Self) -> String
+pub fn MoveAudit::to_repr(Self) -> @debug.Repr
 
 type MoveChain derive(@debug.Debug)
 pub fn MoveChain::check(Self, DocTree, side? : SnapshotSide) -> SnapshotReport

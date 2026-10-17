@@ -1,12 +1,10 @@
 ///|
-/// Plans simultaneous moves against the original inventory. Text is locally
-/// patched, never rendered/serialized as Markdown. CommonMark is the default;
-/// static HTML requires opt-in. Empty moves preserve bytes without parsing.
-pub fn plan_moves(
+// Shared structural gate: content checks must never continue past an ambiguous
+// move map, an output collision or a Markdown/opaque classification change.
+fn validated_moves(
   tree : DocTree,
   requested : Array[Move],
-  profile~ : Profile = CommonMark,
-) -> MovePlan raise MoveError {
+) -> Array[Move] raise MoveError {
   let moves = requested.copy()
   if moves.length() > 4096 {
     refuse("PlanLimit", "", "Use at most 4096 moves")
@@ -47,6 +45,19 @@ pub fn plan_moves(
       )
     }
   }
+  moves
+}
+
+///|
+/// Plans simultaneous moves against the original inventory. Text is locally
+/// patched, never rendered/serialized as Markdown. CommonMark is the default;
+/// static HTML requires opt-in. Empty moves preserve bytes without parsing.
+pub fn plan_moves(
+  tree : DocTree,
+  requested : Array[Move],
+  profile~ : Profile = CommonMark,
+) -> MovePlan raise MoveError {
+  let moves = validated_moves(tree, requested)
   if moves.is_empty() {
     return {
       original: tree,

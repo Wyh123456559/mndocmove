@@ -1,4 +1,4 @@
-# Executed validation — 2026-10-16
+# Executed validation — 2026-10-17
 
 Stable Windows ZIP was fetched from the official `binaries/latest` endpoint,
 Last-Modified 2026-10-12, SHA-256
@@ -6,15 +6,17 @@ Last-Modified 2026-10-12, SHA-256
 It matched the already extracted stable toolchain used for these commands:
 moon 0.1.20261012 (`748b63c`), moonc v0.10.15 (`943464bfa`), matching moonrun.
 Configuration uses current `moon.mod` / `moon.pkg` syntax.
+The official latest Windows ZIP's Last-Modified header was rechecked on
+2026-10-17 and still named the 2026-10-12 stable build.
 
 Executed locally, rather than inferred from compilation:
 
 | Environment | Check | Tests / runtime |
 |---|---|---|
-| Windows x86-64, Wasm host | strict check passed | 134/134 tests; all six E2E scripts passed, including verified adoption |
-| Windows x86-64, Wasm-GC | strict check passed | 127/127 tests |
-| Windows x86-64, JS / Node | strict check passed | 127/127 tests |
-| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 134/134 tests; real Git-to-adoption/repair CLI E2E passed |
+| Windows x86-64, Wasm host | strict check passed | 144/144 tests; all seven E2E scripts passed, including batch migration preflight |
+| Windows x86-64, Wasm-GC | strict check passed | 137/137 tests |
+| Windows x86-64, JS / Node | strict check passed | 137/137 tests |
+| Ubuntu 22.04 x86-64 through WSL2, native | strict check passed | 144/144 tests; real README-to-audit/fix/export/restore CLI E2E passed |
 
 `moon fmt --check`, `moon info` executed; generated interfaces are checked in.
 `--deny-warn` is applied to MoonBit checks/tests and the CLI build in E2E.
@@ -70,6 +72,9 @@ and six E2E scripts on both CLI targets:
 The already-moved-repair head `124e47b` passed all three systems, four library
 targets and six E2E scripts on both CLI targets:
 [GitHub Actions run 38883019106](https://github.com/Wyh123456559/mndocmove/actions/runs/38883019106).
+The verified-adoption head `28c54e3` passed all three systems, four library
+targets and six E2E scripts on both CLI targets:
+[GitHub Actions run 38886685245](https://github.com/Wyh123456559/mndocmove/actions/runs/38886685245).
 
 Tests cover incoming/outgoing/reference rewrites, CRLF/BOM/emoji offsets,
 URL encoding round trips, opaque bytes, deterministic order, swaps, immutability,
@@ -225,6 +230,23 @@ on both local CLI targets. All six Wasm E2Es were rerun after the shared model
 and wire changes; the existing three-OS CI executes the extended script on both
 CLI targets. No new external fixture, dependency or copied implementation/test
 was introduced; existing licenses/provenance in THIRD_PARTY.md still apply.
+
+Batch migration preflight adds nine black-box cases and a tested README example.
+They cover continued per-file refusals, exact ordinary diagnostic equivalence,
+one-error-per-file limits through 4096 files, unchanged structural error
+precedence, UTF-16 offsets/BOM/emoji/CRLF, deterministic reports under reordered
+input, profile inheritance, unsupported responsive/media inputs, copied arrays,
+no-op/invalid-UTF-8 preservation and successful retry after fixes. A ready audit's
+wire/preview/review/replay/restore match the ordinary complete plan. Blocked
+audits cannot expose partial plans, and successful rewrites over the output
+Markdown budget still refuse. Report JSON is rejected by both plan loaders.
+The new real-fixture E2E executes batch errors/read-only checks, structural and
+usage failures, explicit profile recovery, saved-plan review/export/result-check
+and exact restoration on local Wasm and native CLI targets. All six previous
+Wasm E2Es were rerun after extracting the shared move-map structural gate.
+CI now runs seven E2E scripts on both CLI targets in all three operating systems.
+No new fixture download, dependency, externally copied code or test is used;
+existing MIT fixture and dependency provenance remains in THIRD_PARTY.md.
 
 Reproduce with the commands in README. Temporary E2E data is retained in the
 printed system temporary directory; it is not checked into this repository.
